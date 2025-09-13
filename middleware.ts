@@ -8,10 +8,14 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware((auth, req) => {
   if (!isPublicRoute(req)) {
+    if (req.method === "POST" && req.headers.has("Next-Action")) return;
     auth().protect();
   }
 });
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next|sign-in|sign-up|$).*)"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };
