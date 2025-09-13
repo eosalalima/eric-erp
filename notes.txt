@@ -7,9 +7,20 @@ Next steps:
 4. Tip: Explore how you can extend the ORM with scalable connection pooling, global caching, and a managed serverless Postgres database. Read: https://pris.ly/cli/beyond-orm
 
 
+Initialize prisma:
+npx prisma init 
+
+Pull models from DB:
+npx prisma db Pull
+
+Generate client:
+npx prisma generate
+
 Supabase Database Password:
 P0ng0918@M0m00731
 
 
 .env
 DATABASE_URL="postgresql://postgres:P0ng0918@M0m00731@db.oxdusreixnygereumgvk.supabase.co:5432/postgres"
+
+
