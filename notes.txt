@@ -5,3 +5,11 @@ Next steps:
 2. Define models in the schema.prisma file.
 3. Run "prisma migrate dev" to migrate your local Prisma Postgres database.
 4. Tip: Explore how you can extend the ORM with scalable connection pooling, global caching, and a managed serverless Postgres database. Read: https://pris.ly/cli/beyond-orm
+
+
+Supabase Database Password:
+P0ng0918@M0m00731
+
+
+.env
+DATABASE_URL="postgresql://postgres:P0ng0918@M0m00731@db.oxdusreixnygereumgvk.supabase.co:5432/postgres"
