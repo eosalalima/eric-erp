@@ -1,11 +1,22 @@
-import { currentUser } from "@clerk/nextjs/server";
+import Breadcrumb from "@/components/layout/Breadcrumb";
+import PageHeader from "@/components/layout/PageHeader";
+import SidebarLayout from "@/components/layout/SidebarLayout";
+import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
 
-export default async function DashboardPage() {
-    const user = await currentUser();
+const items = [{ name: "Home", href: "/home" }];
 
+export default function AgreementsPage() {
     return (
-        <div className="p-8">
-            <h1 className="text-2xl">Hello, {user?.firstName ?? "User"}!</h1>
-        </div>
-    )
+        <>
+            <SignedIn>
+                <div className="p-4">
+                    <Breadcrumb items={items} />
+                    <PageHeader title="Home" />
+                </div>
+            </SignedIn>
+            <SignedOut>
+                <RedirectToSignIn redirectUrl="/signin" />
+            </SignedOut>
+        </>
+    );
 }

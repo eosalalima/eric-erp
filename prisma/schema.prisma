@@ -15,7 +15,9 @@ model Navigation {
   href           String
   icon           String
   current        Boolean
-  order          Int?
+  sortOrder      Int     @map("order") // DB column is "order", Prisma field is sortOrder
+
+  @@map("Navigation")
 }
 
 model User {

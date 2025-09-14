@@ -151,12 +151,17 @@ export default function Sidebar() {
             <div className="fixed flex flex-col h-full w-64 gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-4 ring-1 ring-white/10">
                 <div className="flex h-16 shrink-0 items-center">
                     <Image
-                        alt="Partnerly"
-                        src="/logo-07.png"
+                        alt="ERIC ERP"
+                        src="/Logo.png"
                         className="mt-4 mb-2 h-14 w-auto"
                         width={150}
                         height={96}
                     />
+                    <div>
+                        <span className="text-xl font-semibold text-lime-500">
+                            ERIC ERP
+                        </span>
+                    </div>
                 </div>
                 <nav className="flex flex-1 flex-col">
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -165,6 +170,8 @@ export default function Sidebar() {
                                 {navigation.map((item) => (
                                     <li key={item.href}>
                                         <Link
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             href={item.href}
                                             className={classNames(
                                                 pathname === item.href
