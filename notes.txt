@@ -21,6 +21,6 @@ P0ng0918@M0m00731
 
 
 .env
-DATABASE_URL="postgresql://postgres:P0ng0918@M0m00731@db.oxdusreixnygereumgvk.supabase.co:5432/postgres"
-
+# DATABASE_URL="postgresql://postgres:P0ng0918@M0m00731@db.oxdusreixnygereumgvk.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres:P0ng0918@M0m00731@db.nxdgvzsmtxwqyadpblbc.supabase.co:5432/postgres"
 
