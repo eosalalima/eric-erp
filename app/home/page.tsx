@@ -1,6 +1,5 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
-import SidebarLayout from "@/components/layout/SidebarLayout";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
 
 const items = [{ name: "Home", href: "/home" }];

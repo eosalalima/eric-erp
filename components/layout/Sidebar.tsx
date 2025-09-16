@@ -94,7 +94,7 @@ interface NavigationApiItem {
     href: string;
     icon: keyof typeof iconMap;
     current: boolean;
-    order: number;
+    sortOrder: number;
 }
 
 const teams = [
@@ -133,7 +133,7 @@ export default function Sidebar() {
         fetch("/api/navigation")
             .then((res) => res.json())
             .then((data: NavigationApiItem[]) => {
-                data.sort((a, b) => a.order - b.order);
+                data.sort((a, b) => a.sortOrder - b.sortOrder);
                 setNavigation(
                     data.map((item) => ({
                         name: item.navigationName,
