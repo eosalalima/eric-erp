@@ -130,19 +130,62 @@ export default function Sidebar() {
     const [navigation, setNavigation] = useState<NavigationItem[]>([]);
 
     useEffect(() => {
-        fetch("/api/navigation")
-            .then((res) => res.json())
-            .then((data: NavigationApiItem[]) => {
-                data.sort((a, b) => a.order - b.order);
+        const fetchNavigation = async () => {
+            try {
+                const response = await fetch("/api/navigation");
+
+                if (!response.ok) {
+                    console.error(
+                        "Failed to fetch navigation:",
+                        response.status,
+                        response.statusText
+                    );
+                    setNavigation([]);
+                    return;
+                }
+
+                const body = await response.text();
+
+                if (!body) {
+                    setNavigation([]);
+                    return;
+                }
+
+                let parsed: unknown;
+
+                try {
+                    parsed = JSON.parse(body);
+                } catch (error) {
+                    console.error("Failed to parse navigation response:", error);
+                    setNavigation([]);
+                    return;
+                }
+
+                if (!Array.isArray(parsed)) {
+                    console.error("Navigation response is not an array");
+                    setNavigation([]);
+                    return;
+                }
+
+                const data = parsed as NavigationApiItem[];
+
+                const sorted = [...data].sort((a, b) => a.order - b.order);
+
                 setNavigation(
-                    data.map((item) => ({
+                    sorted.map((item) => ({
                         name: item.navigationName,
                         href: item.href,
                         icon: item.icon,
                         current: item.current,
                     }))
                 );
-            });
+            } catch (error) {
+                console.error("Error fetching navigation:", error);
+                setNavigation([]);
+            }
+        };
+
+        fetchNavigation();
     }, []);
 
     return (
