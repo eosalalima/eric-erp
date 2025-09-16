@@ -94,7 +94,7 @@ interface NavigationApiItem {
     href: string;
     icon: keyof typeof iconMap;
     current: boolean;
-    order: number;
+    sortOrder: number;
 }
 
 const teams = [
@@ -169,7 +169,7 @@ export default function Sidebar() {
 
                 const data = parsed as NavigationApiItem[];
 
-                const sorted = [...data].sort((a, b) => a.order - b.order);
+                const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder);
 
                 setNavigation(
                     sorted.map((item) => ({
