@@ -3,10 +3,25 @@ import { NextResponse } from 'next/server'
 import dns from 'node:dns/promises'
 import { PrismaClient } from '@prisma/client'
 
+type DiagnosticInfo = {
+  nodeVersion?: string
+  runtime?: string
+  hasDatabaseUrl?: boolean
+  hasDirectUrl?: boolean
+  dbHost?: string
+  dnsLookup?: Awaited<ReturnType<typeof dns.lookup>>
+  prismaOk?: boolean
+  dbNow?: unknown
+  errorName?: string
+  errorMessage?: string
+  errorCode?: unknown
+  errorMeta?: unknown
+}
+
 export const dynamic = 'force-dynamic' // disable caching
 
 export async function GET() {
-  const info: any = {}
+  const info: DiagnosticInfo = {}
 
   try {
     info.nodeVersion = process.version
@@ -36,12 +51,23 @@ export async function GET() {
     await prisma.$disconnect()
 
     return NextResponse.json(info, { status: 200 })
-  } catch (e: any) {
+  } catch (error: unknown) {
     info.prismaOk = false
-    info.errorName = e?.name
-    info.errorMessage = e?.message
-    info.errorCode = e?.code
-    info.errorMeta = e?.meta
+
+    if (typeof error === 'object' && error !== null) {
+      const { name, message } = error as { name?: string; message?: string }
+      info.errorName = name
+      info.errorMessage = message
+
+      if ('code' in error) {
+        info.errorCode = (error as { code?: unknown }).code
+      }
+
+      if ('meta' in error) {
+        info.errorMeta = (error as { meta?: unknown }).meta
+      }
+    }
+
     return NextResponse.json(info, { status: 500 })
   }
 }
