@@ -3,9 +3,12 @@
 import {
     AcademicCapIcon,
     AdjustmentsHorizontalIcon,
+    ArrowPathRoundedSquareIcon,
     BanknotesIcon,
     BeakerIcon,
+    BellAlertIcon,
     BookOpenIcon,
+    BugAntIcon,
     BuildingOffice2Icon,
     ChartBarIcon,
     ChartBarSquareIcon,
@@ -18,11 +21,14 @@ import {
     CogIcon,
     Cog6ToothIcon,
     Cog8ToothIcon,
+    ComputerDesktopIcon,
     CurrencyDollarIcon,
     DocumentCheckIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
     FolderIcon,
+    HandThumbUpIcon,
+    HeartIcon,
     HomeIcon,
     LightBulbIcon,
     LockClosedIcon,
@@ -30,13 +36,13 @@ import {
     PresentationChartLineIcon,
     PuzzlePieceIcon,
     QuestionMarkCircleIcon,
+    ShoppingCartIcon,
     StarIcon,
+    UserCircleIcon,
     UserGroupIcon,
     UserPlusIcon,
     UsersIcon,
     WrenchScrewdriverIcon,
-    BellAlertIcon,
-    HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,9 +52,12 @@ import React, { useEffect, useState } from "react";
 const iconMap = {
     AcademicCapIcon,
     AdjustmentsHorizontalIcon,
+    ArrowPathRoundedSquareIcon,
     BanknotesIcon,
     BeakerIcon,
+    BellAlertIcon,
     BookOpenIcon,
+    BugAntIcon,
     BuildingOffice2Icon,
     ChartBarIcon,
     ChartPieIcon,
@@ -61,11 +70,14 @@ const iconMap = {
     CogIcon,
     Cog6ToothIcon,
     Cog8ToothIcon,
+    ComputerDesktopIcon,
     CurrencyDollarIcon,
     DocumentCheckIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
     FolderIcon,
+    HandThumbUpIcon,
+    HeartIcon,
     HomeIcon,
     LightBulbIcon,
     LockClosedIcon,
@@ -73,13 +85,13 @@ const iconMap = {
     PresentationChartLineIcon,
     PuzzlePieceIcon,
     QuestionMarkCircleIcon,
+    ShoppingCartIcon,
     StarIcon,
+    UserCircleIcon,
     UserGroupIcon,
     UserPlusIcon,
     UsersIcon,
     WrenchScrewdriverIcon,
-    BellAlertIcon,
-    HandThumbUpIcon,
 };
 
 interface NavigationItem {
@@ -156,7 +168,10 @@ export default function Sidebar() {
                 try {
                     parsed = JSON.parse(body);
                 } catch (error) {
-                    console.error("Failed to parse navigation response:", error);
+                    console.error(
+                        "Failed to parse navigation response:",
+                        error
+                    );
                     setNavigation([]);
                     return;
                 }
@@ -169,7 +184,9 @@ export default function Sidebar() {
 
                 const data = parsed as NavigationApiItem[];
 
-                const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder);
+                const sorted = [...data].sort(
+                    (a, b) => a.sortOrder - b.sortOrder
+                );
 
                 setNavigation(
                     sorted.map((item) => ({
