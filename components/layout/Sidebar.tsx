@@ -47,7 +47,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
 
 const iconMap = {
     AcademicCapIcon,
@@ -94,19 +93,11 @@ const iconMap = {
     WrenchScrewdriverIcon,
 };
 
-interface NavigationItem {
+export interface NavigationItem {
     name: string;
     href: string;
     icon: keyof typeof iconMap;
     current: boolean;
-}
-
-interface NavigationApiItem {
-    navigationName: string;
-    href: string;
-    icon: keyof typeof iconMap;
-    current: boolean;
-    sortOrder: number;
 }
 
 const teams = [
@@ -137,73 +128,12 @@ function classNames(...classes: (string | undefined | null | false)[]) {
     return classes.filter(Boolean).join(" ");
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+    navigation: NavigationItem[];
+}
+
+export default function Sidebar({ navigation }: SidebarProps) {
     const pathname = usePathname();
-    const [navigation, setNavigation] = useState<NavigationItem[]>([]);
-
-    useEffect(() => {
-        const fetchNavigation = async () => {
-            try {
-                const response = await fetch("/api/navigation");
-
-                if (!response.ok) {
-                    console.error(
-                        "Failed to fetch navigation:",
-                        response.status,
-                        response.statusText
-                    );
-                    setNavigation([]);
-                    return;
-                }
-
-                const body = await response.text();
-
-                if (!body) {
-                    setNavigation([]);
-                    return;
-                }
-
-                let parsed: unknown;
-
-                try {
-                    parsed = JSON.parse(body);
-                } catch (error) {
-                    console.error(
-                        "Failed to parse navigation response:",
-                        error
-                    );
-                    setNavigation([]);
-                    return;
-                }
-
-                if (!Array.isArray(parsed)) {
-                    console.error("Navigation response is not an array");
-                    setNavigation([]);
-                    return;
-                }
-
-                const data = parsed as NavigationApiItem[];
-
-                const sorted = [...data].sort(
-                    (a, b) => a.sortOrder - b.sortOrder
-                );
-
-                setNavigation(
-                    sorted.map((item) => ({
-                        name: item.navigationName,
-                        href: item.href,
-                        icon: item.icon,
-                        current: item.current,
-                    }))
-                );
-            } catch (error) {
-                console.error("Error fetching navigation:", error);
-                setNavigation([]);
-            }
-        };
-
-        fetchNavigation();
-    }, []);
 
     return (
         <>
