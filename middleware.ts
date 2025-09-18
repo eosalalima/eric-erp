@@ -9,7 +9,12 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    if (req.method === "POST" && req.headers.has("Next-Action")) return;
+    if (
+      req.method === "POST" &&
+      (req.headers.get("next-action") ?? req.headers.get("Next-Action"))
+    ) {
+      return;
+    }
     await auth.protect();
   }
 });
