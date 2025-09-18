@@ -24,7 +24,7 @@ export default async function RootLayout({
     const { userId } = authState;
 
     return (
-        <ClerkProvider>
+        <ClerkProvider dynamic>
             <html lang="en">
                 <body
                     className={`${geistSans.variable} ${geistMono.variable} antialiased`}
