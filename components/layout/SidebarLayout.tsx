@@ -9,7 +9,7 @@ import { SignedIn } from "@clerk/nextjs";
 // Mapping of roleId to route
 const roleRouteTable: { roleId: number; route: string }[] = [
     { roleId: 1, route: "/" },
-    { roleId: 2, route: "/modules/finance-accounting" },
+    { roleId: 2, route: "/modules/finance-accounting" }, 
     { roleId: 3, route: "/modules/human-resource" },
     // Add more mappings as needed
 ];
@@ -40,7 +40,7 @@ export default function SidebarLayout({
             return;
         }
 
-        let newRole: number | null;
+        let newRole: number | null = null;
 
         if (currentRoute === "/") {
             newRole = 1; // Example roleId for home page
@@ -48,11 +48,12 @@ export default function SidebarLayout({
             const matchedRole = roleRouteTable.find(
                 (entry) => entry.route === currentRoute
             );
-            newRole = matchedRole ? matchedRole.roleId : null;
+            newRole = matchedRole ? matchedRole.roleId : 1;
         }
 
         if (newRole !== roleId) {
             setRoleId(newRole);
+            console.log("Set Role ID to:", newRole);
         }
     }, [currentRoute, roleId]);
 
@@ -66,9 +67,8 @@ export default function SidebarLayout({
         }
 
         const fetchNavigation = async () => {
-            try {
-                const roleId = 1; // You can replace this with a dynamic value as needed
-                const response = await fetch(`/api/navigation?roleId=${roleId}`);
+            try {                
+                const response = await fetch(`/api/navigation?roleId=${roleId ?? 1}`);
 
                 if (!response.ok) {
                     console.error(
