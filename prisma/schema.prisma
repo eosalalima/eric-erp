@@ -11,7 +11,7 @@ datasource db {
 
 model Navigation {
   id             String  @id @db.Uuid
-  roleId         Int
+  applicationId  Int     @map("roleId")
   navigationName String
   href           String
   icon           String
