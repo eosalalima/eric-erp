@@ -45,8 +45,10 @@ export default function SidebarLayout({
         if (currentRoute === "/") {
             newRole = 1; // Example roleId for home page
         } else {
+            // Match the first two levels of the route (e.g., /modules/finance-accounting)
+            const firstTwoLevels = currentRoute.split("/").slice(0, 3).join("/");
             const matchedRole = roleRouteTable.find(
-                (entry) => entry.route === currentRoute
+                (entry) => entry.route === firstTwoLevels
             );
             newRole = matchedRole ? matchedRole.roleId : 1;
         }
