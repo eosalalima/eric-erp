@@ -58,6 +58,10 @@ export default function SidebarLayout({
     }, [currentRoute, roleId]);
 
     useEffect(() => {
+        if (roleId === null) {
+            return;
+        }
+
         interface NavigationApiItem {
             navigationName: string;
             href: string;
@@ -67,8 +71,8 @@ export default function SidebarLayout({
         }
 
         const fetchNavigation = async () => {
-            try {                
-                const response = await fetch(`/api/navigation?roleId=${roleId ?? 1}`);
+            try {
+                const response = await fetch(`/api/navigation?roleId=${roleId}`);
 
                 if (!response.ok) {
                     console.error(
@@ -127,7 +131,7 @@ export default function SidebarLayout({
         };
 
         fetchNavigation();
-    }, []);
+    }, [roleId]);
 
     return (
         <div className="min-h-screen flex bg-white text-black">
