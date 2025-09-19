@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run test:build && node --test dist-tests/tests/**/*.test.js",
+    "test:build": "rm -rf dist-tests && tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.31.10",
