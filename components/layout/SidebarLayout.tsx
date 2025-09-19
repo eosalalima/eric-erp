@@ -35,14 +35,26 @@ export default function SidebarLayout({
 
     console.log("Current Route:", currentRoute);
 
-    if (currentRoute === "/") {
-        setRoleId(1); // Example roleId for home page
-    } else {
-        const matchedRole = roleRouteTable.find(
-            (entry) => entry.route === currentRoute
-        );
-        setRoleId(matchedRole ? matchedRole.roleId : null);
-    }
+    useEffect(() => {
+        if (!currentRoute) {
+            return;
+        }
+
+        let newRole: number | null;
+
+        if (currentRoute === "/") {
+            newRole = 1; // Example roleId for home page
+        } else {
+            const matchedRole = roleRouteTable.find(
+                (entry) => entry.route === currentRoute
+            );
+            newRole = matchedRole ? matchedRole.roleId : null;
+        }
+
+        if (newRole !== roleId) {
+            setRoleId(newRole);
+        }
+    }, [currentRoute, roleId]);
 
     useEffect(() => {
         interface NavigationApiItem {
