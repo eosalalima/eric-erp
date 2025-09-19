@@ -160,7 +160,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                 {navigation.map((item) => (
                                     <li key={item.href}>
                                         <Link
-                                            target="_blank"
+                                            {...(pathname === "/" ? { target: "_blank" } : {})}
                                             rel="noopener noreferrer"
                                             href={item.href}
                                             className={classNames(

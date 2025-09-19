@@ -6,6 +6,14 @@ import SidebarDrawer from "./SidebarDrawer";
 import Topbar from "./Topbar";
 import { SignedIn } from "@clerk/nextjs";
 
+// Mapping of roleId to route
+const roleRouteTable: { roleId: number; route: string }[] = [
+    { roleId: 1, route: "/" },
+    { roleId: 2, route: "/modules/finance-accounting" },
+    { roleId: 3, route: "/modules/human-resource" },
+    // Add more mappings as needed
+];
+
 export default function SidebarLayout({
     children,
 }: {
@@ -16,6 +24,25 @@ export default function SidebarLayout({
 
     const openDrawer = () => setIsDrawerOpen(true);
     const closeDrawer = () => setIsDrawerOpen(false);
+
+    // Get the current route
+    const [currentRoute, setCurrentRoute] = useState<string>("");
+    const [roleId, setRoleId] = useState<number | null>(null);  
+
+    useEffect(() => {
+        setCurrentRoute(window.location.pathname);
+    }, []);
+
+    console.log("Current Route:", currentRoute);
+
+    if (currentRoute === "/") {
+        setRoleId(1); // Example roleId for home page
+    } else {
+        const matchedRole = roleRouteTable.find(
+            (entry) => entry.route === currentRoute
+        );
+        setRoleId(matchedRole ? matchedRole.roleId : null);
+    }
 
     useEffect(() => {
         interface NavigationApiItem {
@@ -28,7 +55,8 @@ export default function SidebarLayout({
 
         const fetchNavigation = async () => {
             try {
-                const response = await fetch("/api/navigation?roleId=1");
+                const roleId = 1; // You can replace this with a dynamic value as needed
+                const response = await fetch(`/api/navigation?roleId=${roleId}`);
 
                 if (!response.ok) {
                     console.error(
