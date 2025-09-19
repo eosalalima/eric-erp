@@ -28,7 +28,7 @@ export default function SidebarLayout({
 
         const fetchNavigation = async () => {
             try {
-                const response = await fetch("/api/navigation");
+                const response = await fetch("/api/navigation?roleId=1");
 
                 if (!response.ok) {
                     console.error(
