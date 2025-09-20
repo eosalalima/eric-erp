@@ -31,14 +31,14 @@ export default async function ChartOfAccountsPage() {
     return (
         <>
             <SignedIn>
-                <div className="p-5">
+                <div className="flex min-h-screen flex-col p-5">
                     <Breadcrumb items={items} />
                     <PageHeader title="Chart of Accounts" />
 
-                    <div className="mt-8 flow-root">
-                        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                                <div className="overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
+                    <div className="mt-8 flex flex-1 min-h-0 flex-col">
+                        <div className="-mx-4 -my-2 flex-1 min-h-0 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div className="flex h-full min-w-full flex-col py-2 align-middle sm:px-6 lg:px-8">
+                                <div className="flex flex-1 min-h-0 flex-col overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
                                     {error ? (
                                         <div className="bg-red-50 p-4">
                                             <p className="text-sm text-red-700">{error}</p>
@@ -48,63 +48,65 @@ export default async function ChartOfAccountsPage() {
                                             No accounts found.
                                         </div>
                                     ) : (
-                                        <table className="relative min-w-full divide-y divide-gray-300">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th
-                                                        scope="col"
-                                                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                                                    >
-                                                        Code
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Name
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Type
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Normal Balance
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Status
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-200 bg-white">
-                                                {accounts.map((account) => (
-                                                    <tr key={account.id}>
-                                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                                                            {account.code}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.name}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.type}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.normal_balance}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.status}
-                                                        </td>
+                                        <div className="flex-1 overflow-y-auto max-h-[calc(100vh-17rem)]">
+                                            <table className="relative min-w-full divide-y divide-gray-300">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th
+                                                            scope="col"
+                                                            className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                                                        >
+                                                            Code
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                        >
+                                                            Name
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                        >
+                                                            Type
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                        >
+                                                            Normal Balance
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                        >
+                                                            Status
+                                                        </th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200 bg-white">
+                                                    {accounts.map((account) => (
+                                                        <tr key={account.id}>
+                                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                                                {account.code}
+                                                            </td>
+                                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                {account.name}
+                                                            </td>
+                                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                {account.type}
+                                                            </td>
+                                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                {account.normal_balance}
+                                                            </td>
+                                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                {account.status}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     )}
                                 </div>
                             </div>
