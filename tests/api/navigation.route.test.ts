@@ -33,6 +33,15 @@ test("filters navigation by provided applicationId", async () => {
             icon: "home",
             current: false,
             sortOrder: 1,
+            subnavigation: [
+                {
+                    subNavigationName: "Overview",
+                    href: "/dashboard/overview",
+                    icon: "chart",
+                    current: false,
+                    sortOrder: 1,
+                },
+            ],
         },
     ];
 
@@ -55,7 +64,9 @@ test("filters navigation by provided applicationId", async () => {
 
     const response = await handler(new Request("https://example.com/api/navigation?applicationId=2"));
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), expectedNavigation);
+    const payload = await response.json();
+    assert.deepEqual(payload, expectedNavigation);
+    assert.deepEqual(payload[0]?.subnavigation, expectedNavigation[0]?.subnavigation);
 
     assert.equal(navigationFindMany.mock.callCount(), 1);
     const call = navigationFindMany.mock.calls[0];
@@ -79,6 +90,15 @@ test("falls back to the authenticated user's application when applicationId is o
             icon: "cog",
             current: true,
             sortOrder: 2,
+            subnavigation: [
+                {
+                    subNavigationName: "Profile",
+                    href: "/settings/profile",
+                    icon: "user",
+                    current: true,
+                    sortOrder: 1,
+                },
+            ],
         },
     ];
     const navigationFindMany = mock.fn(async () => navigationResult);
@@ -92,7 +112,9 @@ test("falls back to the authenticated user's application when applicationId is o
 
     const response = await handler(new Request("https://example.com/api/navigation"));
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), navigationResult);
+    const payload = await response.json();
+    assert.deepEqual(payload, navigationResult);
+    assert.deepEqual(payload[0]?.subnavigation, navigationResult[0]?.subnavigation);
 
     assert.equal(authMock.mock.callCount(), 1);
     assert.equal(findFirstMock.mock.callCount(), 1);

@@ -1,25 +1,58 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export type NavigationHandlerDependencies = {
-    prisma: {
-        navigation: {
-            findMany: (...args: unknown[]) => Promise<unknown>;
-        };
-        user: {
-            findFirst: (...args: unknown[]) => Promise<{ applicationId: number } | null>;
-        };
-    };
-    auth: () => Promise<{ userId: string | null } | null>;
-};
-
 const navigationSelect = {
     navigationName: true,
     href: true,
     icon: true,
     current: true,
     sortOrder: true,
+    subnavigation: {
+        orderBy: { sortOrder: "asc" as const },
+        select: {
+            subNavigationName: true,
+            href: true,
+            icon: true,
+            current: true,
+            sortOrder: true,
+        },
+    },
 } as const;
+
+type NavigationPayload = {
+    navigationName: string;
+    href: string;
+    icon: string;
+    current: boolean;
+    sortOrder: number | null;
+    subnavigation: {
+        subNavigationName: string;
+        href: string;
+        icon: string | null;
+        current: boolean | null;
+        sortOrder: number | null;
+    }[];
+};
+
+type NavigationFindManyArgs = {
+    where: { applicationId: number };
+    orderBy: { sortOrder: "asc" | "desc" | null };
+    select: typeof navigationSelect;
+};
+
+type UserFindFirstArgs = { where: { clerkId: string } };
+
+export type NavigationHandlerDependencies = {
+    prisma: {
+        navigation: {
+            findMany: (args: NavigationFindManyArgs) => Promise<NavigationPayload[]>;
+        };
+        user: {
+            findFirst: (args: UserFindFirstArgs) => Promise<{ applicationId: number } | null>;
+        };
+    };
+    auth: () => Promise<{ userId: string | null } | null>;
+};
 
 function parseApplicationIdFromRequest(request: Request | NextRequest) {
     const applicationIdParam = new URL(request.url).searchParams.get("applicationId");
