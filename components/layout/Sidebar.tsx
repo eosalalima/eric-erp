@@ -22,7 +22,9 @@ import {
     Cog6ToothIcon,
     Cog8ToothIcon,
     ComputerDesktopIcon,
+    CreditCardIcon,
     CurrencyDollarIcon,
+    DocumentChartBarIcon,
     DocumentCheckIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
@@ -35,13 +37,17 @@ import {
     MagnifyingGlassIcon,
     PresentationChartLineIcon,
     PuzzlePieceIcon,
+    ReceiptPercentIcon,
+    ReceiptRefundIcon,
     QuestionMarkCircleIcon,
+    ShieldCheckIcon,
     ShoppingCartIcon,
     StarIcon,
     UserCircleIcon,
     UserGroupIcon,
     UserPlusIcon,
     UsersIcon,
+    WalletIcon,
     WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -70,7 +76,9 @@ const iconMap = {
     Cog6ToothIcon,
     Cog8ToothIcon,
     ComputerDesktopIcon,
+    CreditCardIcon,
     CurrencyDollarIcon,
+    DocumentChartBarIcon,
     DocumentCheckIcon,
     EnvelopeIcon,
     ExclamationTriangleIcon,
@@ -83,13 +91,17 @@ const iconMap = {
     MagnifyingGlassIcon,
     PresentationChartLineIcon,
     PuzzlePieceIcon,
+    ReceiptPercentIcon,
+    ReceiptRefundIcon,
     QuestionMarkCircleIcon,
+    ShieldCheckIcon,
     ShoppingCartIcon,
     StarIcon,
     UserCircleIcon,
     UserGroupIcon,
     UserPlusIcon,
     UsersIcon,
+    WalletIcon,
     WrenchScrewdriverIcon,
 };
 
@@ -160,7 +172,9 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                 {navigation.map((item) => (
                                     <li key={item.href}>
                                         <Link
-                                            {...(pathname === "/" ? { target: "_blank" } : {})}
+                                            {...(pathname === "/"
+                                                ? { target: "_blank" }
+                                                : {})}
                                             rel="noopener noreferrer"
                                             href={item.href}
                                             className={classNames(

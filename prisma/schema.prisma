@@ -7,26 +7,279 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+  schemas   = ["finance", "public"]
 }
 
-model Navigation {
-  id             String  @id @db.Uuid
-  roleId         Int 
-  navigationName String
-  href           String
-  icon           String
-  current        Boolean
-  sortOrder      Int     @map("order") // DB column is "order", Prisma field is sortOrder
-
-  @@map("Navigation")
-}
-
-model User {
-  id        String   @id @db.Uuid
-  email     String   @unique
+model user {
+  id        String   @id(map: "User_pkey") @db.Uuid
+  email     String   @unique(map: "User_email_key")
   roleId    Int
   clerkId   String
   firstName String?
   lastName  String?
   firstTime Boolean? @default(true)
+
+  @@schema("public")
+}
+
+model account {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ledger_id              String                   @db.Uuid
+  code                   String
+  name                   String
+  description            String?
+  level                  Int
+  parent_id              String?                  @db.Uuid
+  type                   account_type
+  normal_balance         normal_balance
+  is_postable            Boolean                  @default(true)
+  status                 String                   @default("ACTIVE")
+  ledger                 ledger                   @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  account                account?                 @relation("accountToaccount", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_account          account[]                @relation("accountToaccount")
+  account_period_balance account_period_balance[]
+  journal_line           journal_line[]
+
+  @@unique([ledger_id, code], map: "account_code_unique_per_ledger")
+  @@index([ledger_id, type], map: "account_ledger_type_idx")
+  @@schema("finance")
+}
+
+model account_period_balance {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ledger_id      String  @db.Uuid
+  account_id     String  @db.Uuid
+  period_id      String  @db.Uuid
+  cost_center_id String? @db.Uuid
+  department_id  String? @db.Uuid
+  project_id     String? @db.Uuid
+  partner_id     String? @db.Uuid
+  opening        Decimal @default(0) @db.Decimal(18, 2)
+  debits         Decimal @default(0) @db.Decimal(18, 2)
+  credits        Decimal @default(0) @db.Decimal(18, 2)
+  closing        Decimal @default(0) @db.Decimal(18, 2)
+  account        account @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ledger         ledger  @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  period         period  @relation(fields: [period_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([ledger_id, account_id, period_id, cost_center_id, department_id, project_id, partner_id], map: "apb_unique")
+  @@index([ledger_id, account_id, period_id], map: "apb_fast_idx")
+  @@schema("finance")
+}
+
+model approval {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journal_entry_id String        @db.Uuid
+  state            String
+  approved_by      String?
+  approved_at      DateTime?     @db.Timestamptz(6)
+  remarks          String?
+  journal_entry    journal_entry @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("finance")
+}
+
+model attachment {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journal_entry_id String        @db.Uuid
+  file_url         String
+  filename         String
+  uploaded_by      String
+  uploaded_at      DateTime      @default(now()) @db.Timestamptz(6)
+  journal_entry    journal_entry @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("finance")
+}
+
+model currency {
+  code                                                String          @id
+  name                                                String
+  decimals                                            Int             @default(2)
+  exchange_rate_exchange_rate_from_currencyTocurrency exchange_rate[] @relation("exchange_rate_from_currencyTocurrency")
+  exchange_rate_exchange_rate_to_currencyTocurrency   exchange_rate[] @relation("exchange_rate_to_currencyTocurrency")
+  journal_entry                                       journal_entry[]
+  journal_line                                        journal_line[]
+
+  @@schema("finance")
+}
+
+model exchange_rate {
+  id                                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  from_currency                                  String
+  to_currency                                    String
+  rate_date                                      DateTime @db.Date
+  rate                                           Decimal  @db.Decimal(18, 8)
+  currency_exchange_rate_from_currencyTocurrency currency @relation("exchange_rate_from_currencyTocurrency", fields: [from_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  currency_exchange_rate_to_currencyTocurrency   currency @relation("exchange_rate_to_currencyTocurrency", fields: [to_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([from_currency, to_currency, rate_date], map: "exchange_rate_unique")
+  @@index([rate_date], map: "exchange_rate_date_idx")
+  @@schema("finance")
+}
+
+model fiscal_year {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ledger_id  String        @db.Uuid
+  year       Int
+  start_date DateTime      @db.Date
+  end_date   DateTime      @db.Date
+  status     period_status @default(OPEN)
+  ledger     ledger        @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  period     period[]
+
+  @@unique([ledger_id, year], map: "fiscal_year_unique_per_ledger")
+  @@index([ledger_id, status], map: "fiscal_year_status_idx")
+  @@schema("finance")
+}
+
+model journal_entry {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ledger_id     String         @db.Uuid
+  period_id     String         @db.Uuid
+  je_no         String?
+  doc_date      DateTime       @db.Date
+  post_date     DateTime?      @db.Date
+  currency_code String
+  fx_rate       Decimal        @db.Decimal(18, 8)
+  source        je_source      @default(MANUAL)
+  status        je_status      @default(DRAFT)
+  reference     String?
+  memo          String?
+  approval      approval[]
+  attachment    attachment[]
+  currency      currency       @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  ledger        ledger         @relation(fields: [ledger_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  period        period         @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  journal_line  journal_line[]
+
+  @@unique([ledger_id, je_no], map: "journal_entry_je_no_unique")
+  @@index([doc_date])
+  @@index([period_id, status], map: "journal_entry_period_status_idx")
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model journal_line {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journal_entry_id String          @db.Uuid
+  line_no          Int
+  account_id       String          @db.Uuid
+  debit            Decimal         @default(0) @db.Decimal(18, 2)
+  credit           Decimal         @default(0) @db.Decimal(18, 2)
+  amount_dc        Decimal         @db.Decimal(18, 2)
+  currency_code    String
+  fx_rate          Decimal         @db.Decimal(18, 8)
+  amount_txn       Decimal         @db.Decimal(18, 2)
+  cost_center_id   String?         @db.Uuid
+  department_id    String?         @db.Uuid
+  project_id       String?         @db.Uuid
+  partner_id       String?         @db.Uuid
+  tax_code_id      String?         @db.Uuid
+  memo             String?
+  account          account         @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  currency         currency        @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  journal_entry    journal_entry   @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subledger_link   subledger_link?
+
+  @@unique([journal_entry_id, line_no], map: "journal_line_unique_per_entry")
+  @@index([account_id], map: "journal_line_account_idx")
+  @@schema("finance")
+}
+
+model ledger {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                   String                   @unique
+  name                   String
+  base_currency          String
+  is_default             Boolean                  @default(false)
+  account                account[]
+  account_period_balance account_period_balance[]
+  fiscal_year            fiscal_year[]
+  journal_entry          journal_entry[]
+
+  @@schema("finance")
+}
+
+model period {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fiscal_year_id         String                   @db.Uuid
+  period_no              Int
+  start_date             DateTime                 @db.Date
+  end_date               DateTime                 @db.Date
+  status                 period_status            @default(OPEN)
+  account_period_balance account_period_balance[]
+  journal_entry          journal_entry[]
+  fiscal_year            fiscal_year              @relation(fields: [fiscal_year_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([fiscal_year_id, period_no], map: "period_unique_per_year")
+  @@index([status])
+  @@schema("finance")
+}
+
+model subledger_link {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journal_line_id String       @unique @db.Uuid
+  domain          String
+  external_id     String
+  journal_line    journal_line @relation(fields: [journal_line_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("finance")
+}
+
+model navigation {
+  id             String  @id(map: "Navigation_pkey") @db.Uuid
+  roleId         Int
+  navigationName String
+  href           String
+  icon           String
+  current        Boolean
+  sortOrder      Int?
+
+  @@schema("public")
+}
+
+enum account_type {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+  OFF_BALANCE
+
+  @@schema("finance")
+}
+
+enum je_source {
+  MANUAL
+  AP
+  AR
+  FA
+  PAYROLL
+  IMPORT
+  ADJUSTMENT
+
+  @@schema("finance")
+}
+
+enum je_status {
+  DRAFT
+  POSTED
+  VOID
+
+  @@schema("finance")
+}
+
+enum normal_balance {
+  DEBIT
+  CREDIT
+
+  @@schema("finance")
+}
+
+enum period_status {
+  OPEN
+  CLOSED
+  LOCKED
+
+  @@schema("finance")
 }
