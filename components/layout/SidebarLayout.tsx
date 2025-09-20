@@ -6,18 +6,18 @@ import SidebarDrawer from "./SidebarDrawer";
 import Topbar from "./Topbar";
 import { SignedIn } from "@clerk/nextjs";
 
-// Mapping of roleId to route
-const roleRouteTable: { roleId: number; route: string }[] = [
-    { roleId: 1, route: "/" },
-    { roleId: 2, route: "/modules/finance-accounting" },
-    { roleId: 3, route: "/modules/human-resource" },
-    { roleId: 4, route: "/modules/supply-chain" },
-    { roleId: 5, route: "/modules/customer-relationship" },
-    { roleId: 6, route: "/modules/sales-distribution" },
-    { roleId: 7, route: "/modules/project-management" },
-    { roleId: 8, route: "/modules/business-intelligence" },
-    { roleId: 9, route: "/modules/compliance-risk" },
-    { roleId: 10, route: "/modules/ecommerce-customer-portal" },
+// Mapping of applicationId to route
+const applicationRouteTable: { applicationId: number; route: string }[] = [
+    { applicationId: 1, route: "/" },
+    { applicationId: 2, route: "/modules/finance-accounting" },
+    { applicationId: 3, route: "/modules/human-resource" },
+    { applicationId: 4, route: "/modules/supply-chain" },
+    { applicationId: 5, route: "/modules/customer-relationship" },
+    { applicationId: 6, route: "/modules/sales-distribution" },
+    { applicationId: 7, route: "/modules/project-management" },
+    { applicationId: 8, route: "/modules/business-intelligence" },
+    { applicationId: 9, route: "/modules/compliance-risk" },
+    { applicationId: 10, route: "/modules/ecommerce-customer-portal" },
     // Add more mappings as needed
 ];
 
@@ -34,7 +34,7 @@ export default function SidebarLayout({
 
     // Get the current route
     const [currentRoute, setCurrentRoute] = useState<string>("");
-    const [roleId, setRoleId] = useState<number | null>(null);
+    const [applicationId, setApplicationId] = useState<number | null>(null);
 
     useEffect(() => {
         setCurrentRoute(window.location.pathname);
@@ -47,30 +47,32 @@ export default function SidebarLayout({
             return;
         }
 
-        let newRole: number | null = null;
+        let newApplicationId: number | null = null;
 
         if (currentRoute === "/") {
-            newRole = 1; // Example roleId for home page
+            newApplicationId = 1; // Example applicationId for home page
         } else {
             // Match the first two levels of the route (e.g., /modules/finance-accounting)
             const firstTwoLevels = currentRoute
                 .split("/")
                 .slice(0, 3)
                 .join("/");
-            const matchedRole = roleRouteTable.find(
+            const matchedApplication = applicationRouteTable.find(
                 (entry) => entry.route === firstTwoLevels
             );
-            newRole = matchedRole ? matchedRole.roleId : 1;
+            newApplicationId = matchedApplication
+                ? matchedApplication.applicationId
+                : 1;
         }
 
-        if (newRole !== roleId) {
-            setRoleId(newRole);
-            console.log("Set Role ID to:", newRole);
+        if (newApplicationId !== applicationId) {
+            setApplicationId(newApplicationId);
+            console.log("Set Application ID to:", newApplicationId);
         }
-    }, [currentRoute, roleId]);
+    }, [currentRoute, applicationId]);
 
     useEffect(() => {
-        if (roleId === null) {
+        if (applicationId === null) {
             return;
         }
 
@@ -85,12 +87,13 @@ export default function SidebarLayout({
         const fetchNavigation = async () => {
             try {
                 const response = await fetch(
-                    `/api/navigation?roleId=${roleId}`
+                    `/api/navigation?applicationId=${applicationId}`
                 );
 
                 if (!response.ok) {
                     console.error(
-                        "Failed to fetch navigation:",
+                        "Failed to fetch navigation for application:",
+                        applicationId,
                         response.status,
                         response.statusText
                     );
@@ -111,7 +114,8 @@ export default function SidebarLayout({
                     parsed = JSON.parse(body);
                 } catch (error) {
                     console.error(
-                        "Failed to parse navigation response:",
+                        "Failed to parse navigation response for application:",
+                        applicationId,
                         error
                     );
                     setNavigation([]);
@@ -119,7 +123,10 @@ export default function SidebarLayout({
                 }
 
                 if (!Array.isArray(parsed)) {
-                    console.error("Navigation response is not an array");
+                    console.error(
+                        "Navigation response is not an array for application:",
+                        applicationId
+                    );
                     setNavigation([]);
                     return;
                 }
@@ -139,13 +146,17 @@ export default function SidebarLayout({
                     }))
                 );
             } catch (error) {
-                console.error("Error fetching navigation:", error);
+                console.error(
+                    "Error fetching navigation for application:",
+                    applicationId,
+                    error
+                );
                 setNavigation([]);
             }
         };
 
         fetchNavigation();
-    }, [roleId]);
+    }, [applicationId]);
 
     return (
         <div className="min-h-screen flex bg-white text-black">
