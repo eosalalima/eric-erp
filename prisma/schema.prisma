@@ -227,13 +227,27 @@ model subledger_link {
 }
 
 model navigation {
-  id             String  @id(map: "Navigation_pkey") @db.Uuid
+  id             String          @id(map: "Navigation_pkey") @db.Uuid
   applicationId  Int
   navigationName String
   href           String
   icon           String
   current        Boolean
   sortOrder      Int?
+  subnavigation  subnavigation[]
+
+  @@schema("public")
+}
+
+model subnavigation {
+  id                String     @id @unique(map: "idx_id") @db.Uuid
+  navigationId      String     @db.Uuid
+  subNavigationName String
+  href              String
+  icon              String?
+  current           Boolean?
+  sortOrder         Int?
+  navigation        navigation @relation(fields: [navigationId], references: [id], onUpdate: Restrict, map: "fk_navigation_navigationId")
 
   @@schema("public")
 }
