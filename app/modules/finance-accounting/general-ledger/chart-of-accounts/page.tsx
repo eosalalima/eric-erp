@@ -1,7 +1,7 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
+import { prisma } from "@/lib/prisma";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
-import { headers } from "next/headers";
 
 const items = [
     { name: "Home", href: "/modules/finance-accounting" },
@@ -15,44 +15,14 @@ const items = [
     },
 ];
 
-type Account = {
-    id: string;
-    code: string;
-    name: string;
-    type: string;
-    normal_balance: string;
-    status: string;
-};
+type Account = Awaited<ReturnType<typeof prisma.account.findMany>>[number];
 
 export default async function ChartOfAccountsPage() {
     let accounts: Account[] = [];
     let error: string | null = null;
 
     try {
-        const headersList = headers();
-        const protocol = headersList.get("x-forwarded-proto") ?? "http";
-        const host =
-            headersList.get("x-forwarded-host") ?? headersList.get("host");
-        const baseUrl = host
-            ? `${protocol}://${host}`
-            : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-        const response = await fetch(
-            `${baseUrl}/api/finance-accounting/general-ledger`,
-            { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to fetch accounts");
-        }
-
-        const data = (await response.json()) as unknown;
-
-        if (!Array.isArray(data)) {
-            throw new Error("Invalid response format");
-        }
-
-        accounts = data as Account[];
+        accounts = await prisma.account.findMany();
     } catch (fetchError) {
         console.error(fetchError);
         error = "Unable to load accounts at this time. Please try again later.";
