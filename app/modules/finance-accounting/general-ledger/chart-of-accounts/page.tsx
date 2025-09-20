@@ -1,5 +1,6 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
+import ChartOfAccountsTable from "./ChartOfAccountsTable";
 import { prisma } from "@/lib/prisma";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
 
@@ -48,63 +49,7 @@ export default async function ChartOfAccountsPage() {
                                             No accounts found.
                                         </div>
                                     ) : (
-                                        <table className="relative min-w-full divide-y divide-gray-300">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th
-                                                        scope="col"
-                                                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                                                    >
-                                                        Code
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Name
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Type
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Normal Balance
-                                                    </th>
-                                                    <th
-                                                        scope="col"
-                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                    >
-                                                        Status
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-200 bg-white">
-                                                {accounts.map((account) => (
-                                                    <tr key={account.id}>
-                                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                                                            {account.code}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.name}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.type}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.normal_balance}
-                                                        </td>
-                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                            {account.status}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                        <ChartOfAccountsTable accounts={accounts} />
                                     )}
                                 </div>
                             </div>
