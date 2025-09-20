@@ -49,8 +49,9 @@ export default async function ChartOfAccountsPage() {
                                             No accounts found.
                                         </div>
                                     ) : (
-
-                                        <ChartOfAccountsTable accounts={accounts} />
+                                        <div className="flex-1 min-h-0 min-w-full overflow-y-auto overflow-x-auto">
+                                            <ChartOfAccountsTable accounts={accounts} />
+                                        </div>
                                     )}
                                 </div>
                             </div>
