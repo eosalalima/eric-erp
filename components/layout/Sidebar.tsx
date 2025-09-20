@@ -13,6 +13,7 @@ import {
     ChartBarIcon,
     ChartBarSquareIcon,
     ChartPieIcon,
+    ChevronRightIcon,
     ChatBubbleLeftRightIcon,
     ChatBubbleOvalLeftEllipsisIcon,
     CheckCircleIcon,
@@ -105,11 +106,21 @@ const iconMap = {
     WrenchScrewdriverIcon,
 };
 
+const fallbackIconKey = "HomeIcon" satisfies keyof typeof iconMap;
+
+export interface SubNavigationItem {
+    name: string;
+    href: string;
+    icon?: keyof typeof iconMap;
+    current?: boolean;
+}
+
 export interface NavigationItem {
     name: string;
     href: string;
     icon: keyof typeof iconMap;
     current: boolean;
+    subnavigation?: SubNavigationItem[];
 }
 
 const teams = [
@@ -169,36 +180,135 @@ export default function Sidebar({ navigation }: SidebarProps) {
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                         <li>
                             <ul role="list" className="-mx-2 space-y-1">
-                                {navigation.map((item) => (
-                                    <li key={item.href}>
-                                        <Link
-                                            {...(pathname === "/"
-                                                ? { target: "_blank" }
-                                                : {})}
-                                            rel="noopener noreferrer"
-                                            href={item.href}
+                                {navigation.map((item) => {
+                                    const hasChildren =
+                                        (item.subnavigation?.length ?? 0) > 0;
+                                    const Icon =
+                                        iconMap[item.icon] ??
+                                        iconMap[fallbackIconKey];
+                                    const isActive =
+                                        item.current ||
+                                        pathname === item.href ||
+                                        (item.subnavigation ?? []).some(
+                                            (child) =>
+                                                child.current ||
+                                                pathname === child.href
+                                        );
+
+                                    return (
+                                        <li
+                                            key={item.href}
                                             className={classNames(
-                                                pathname === item.href
-                                                    ? "bg-gray-800 text-white"
-                                                    : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                                                "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
+                                                "relative",
+                                                hasChildren ? "group" : undefined
                                             )}
                                         >
-                                            {(() => {
-                                                const Icon =
-                                                    iconMap[item.icon] ??
-                                                    HomeIcon;
-                                                return (
-                                                    <Icon
+                                            <Link
+                                                {...(pathname === "/"
+                                                    ? { target: "_blank" }
+                                                    : {})}
+                                                rel="noopener noreferrer"
+                                                href={item.href}
+                                                className={classNames(
+                                                    isActive
+                                                        ? "bg-gray-800 text-white"
+                                                        : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                                    "flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold transition"
+                                                )}
+                                            >
+                                                <Icon
+                                                    aria-hidden="true"
+                                                    className="size-6 shrink-0"
+                                                />
+                                                <span className="truncate">
+                                                    {item.name}
+                                                </span>
+                                                {hasChildren ? (
+                                                    <ChevronRightIcon
                                                         aria-hidden="true"
-                                                        className="size-6 shrink-0"
+                                                        className="ml-auto size-4 shrink-0 text-gray-500 transition group-hover:text-white"
                                                     />
-                                                );
-                                            })()}
-                                            {item.name}
-                                        </Link>
-                                    </li>
-                                ))}
+                                                ) : null}
+                                            </Link>
+
+                                            {hasChildren ? (
+                                                <>
+                                                    <div className="mt-1 ml-9 space-y-1 border-l border-gray-800 pl-3 md:hidden">
+                                                        {item.subnavigation?.map((child) => {
+                                                            const ChildIcon =
+                                                                child.icon
+                                                                    ? iconMap[child.icon]
+                                                                    : iconMap[
+                                                                          fallbackIconKey
+                                                                      ];
+                                                            const childIsActive =
+                                                                child.current ||
+                                                                pathname ===
+                                                                    child.href;
+
+                                                            return (
+                                                                <Link
+                                                                    key={child.href}
+                                                                    href={child.href}
+                                                                    className={classNames(
+                                                                        childIsActive
+                                                                            ? "bg-gray-800 text-white"
+                                                                            : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                                                                        "flex items-center gap-x-2 rounded-md px-2 py-1 text-sm font-medium transition"
+                                                                    )}
+                                                                >
+                                                                    <ChildIcon
+                                                                        aria-hidden="true"
+                                                                        className="size-4 shrink-0"
+                                                                    />
+                                                                    <span className="truncate">
+                                                                        {child.name}
+                                                                    </span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    <div className="hidden md:absolute md:left-full md:top-0 md:z-10 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
+                                                        {item.subnavigation?.map((child) => {
+                                                            const ChildIcon =
+                                                                child.icon
+                                                                    ? iconMap[child.icon]
+                                                                    : iconMap[
+                                                                          fallbackIconKey
+                                                                      ];
+                                                            const childIsActive =
+                                                                child.current ||
+                                                                pathname ===
+                                                                    child.href;
+
+                                                            return (
+                                                                <Link
+                                                                    key={`${child.href}-popover`}
+                                                                    href={child.href}
+                                                                    className={classNames(
+                                                                        childIsActive
+                                                                            ? "bg-gray-800 text-white"
+                                                                            : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                                                                        "flex items-center gap-x-2 rounded-md px-2 py-1 font-medium transition"
+                                                                    )}
+                                                                >
+                                                                    <ChildIcon
+                                                                        aria-hidden="true"
+                                                                        className="size-4 shrink-0"
+                                                                    />
+                                                                    <span className="truncate">
+                                                                        {child.name}
+                                                                    </span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </>
+                                            ) : null}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </li>
                         <li>
