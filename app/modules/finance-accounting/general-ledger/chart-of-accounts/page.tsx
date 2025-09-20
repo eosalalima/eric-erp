@@ -1,6 +1,7 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
+import { headers } from "next/headers";
 
 const items = [
     { name: "Home", href: "/modules/finance-accounting" },
@@ -14,7 +15,49 @@ const items = [
     },
 ];
 
-export default function ChartOfAccountsPage() {
+type Account = {
+    id: string;
+    code: string;
+    name: string;
+    type: string;
+    normal_balance: string;
+    status: string;
+};
+
+export default async function ChartOfAccountsPage() {
+    let accounts: Account[] = [];
+    let error: string | null = null;
+
+    try {
+        const headersList = headers();
+        const protocol = headersList.get("x-forwarded-proto") ?? "http";
+        const host =
+            headersList.get("x-forwarded-host") ?? headersList.get("host");
+        const baseUrl = host
+            ? `${protocol}://${host}`
+            : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+        const response = await fetch(
+            `${baseUrl}/api/finance-accounting/general-ledger`,
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch accounts");
+        }
+
+        const data = (await response.json()) as unknown;
+
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid response format");
+        }
+
+        accounts = data as Account[];
+    } catch (fetchError) {
+        console.error(fetchError);
+        error = "Unable to load accounts at this time. Please try again later.";
+    }
+
     return (
         <>
             <SignedIn>
@@ -26,73 +69,73 @@ export default function ChartOfAccountsPage() {
                         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                                 <div className="overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
-                                    <table className="relative min-w-full divide-y divide-gray-300">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th
-                                                    scope="col"
-                                                    className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                                                >
-                                                    Name
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                >
-                                                    Title
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                >
-                                                    Email
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                                >
-                                                    Role
-                                                </th>
-                                                <th
-                                                    scope="col"
-                                                    className="py-3.5 pl-3 pr-4 sm:pr-6"
-                                                >
-                                                    <span className="sr-only">
-                                                        Edit
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 bg-white">
-                                            {people.map((person) => (
-                                                <tr key={person.email}>
-                                                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                                                        {person.name}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                        {person.title}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                        {person.email}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                        {person.role}
-                                                    </td>
-                                                    <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                        <a
-                                                            href="#"
-                                                            className="text-indigo-600 hover:text-indigo-900"
-                                                        >
-                                                            Edit
-                                                            <span className="sr-only">
-                                                                , {person.name}
-                                                            </span>
-                                                        </a>
-                                                    </td>
+                                    {error ? (
+                                        <div className="bg-red-50 p-4">
+                                            <p className="text-sm text-red-700">{error}</p>
+                                        </div>
+                                    ) : accounts.length === 0 ? (
+                                        <div className="p-4 text-sm text-gray-500">
+                                            No accounts found.
+                                        </div>
+                                    ) : (
+                                        <table className="relative min-w-full divide-y divide-gray-300">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th
+                                                        scope="col"
+                                                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                                                    >
+                                                        Code
+                                                    </th>
+                                                    <th
+                                                        scope="col"
+                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                    >
+                                                        Name
+                                                    </th>
+                                                    <th
+                                                        scope="col"
+                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                    >
+                                                        Type
+                                                    </th>
+                                                    <th
+                                                        scope="col"
+                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                    >
+                                                        Normal Balance
+                                                    </th>
+                                                    <th
+                                                        scope="col"
+                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                    >
+                                                        Status
+                                                    </th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200 bg-white">
+                                                {accounts.map((account) => (
+                                                    <tr key={account.id}>
+                                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                                            {account.code}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                            {account.name}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                            {account.type}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                            {account.normal_balance}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                            {account.status}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
                                 </div>
                             </div>
                         </div>
