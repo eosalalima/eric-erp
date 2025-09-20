@@ -320,7 +320,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                 <>
                                                     <div
                                                         id={popoverId}
-                                                        className="hidden md:absolute md:left-full md:top-0 md:z-10 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 z-50"
+                                                        className="hidden md:absolute md:left-full md:top-0 md:z-50 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 z-50"
                                                     >
                                                         {item.subnavigation?.map(
                                                             (child) => {
