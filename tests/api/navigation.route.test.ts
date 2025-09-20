@@ -3,7 +3,7 @@ import { mock, test } from "node:test";
 
 import { createNavigationHandler } from "../../app/api/navigation/navigation-handler";
 
-test("returns 400 when roleId query parameter is invalid", async () => {
+test("returns 400 when applicationId query parameter is invalid", async () => {
     process.env.DATABASE_URL = "postgres://test";
 
     const navigationFindMany = mock.fn(async () => []);
@@ -17,13 +17,13 @@ test("returns 400 when roleId query parameter is invalid", async () => {
         auth: async () => ({ userId: "user_123" }),
     });
 
-    const response = await handler(new Request("https://example.com/api/navigation?roleId=abc"));
+    const response = await handler(new Request("https://example.com/api/navigation?applicationId=abc"));
     assert.equal(response.status, 400);
-    assert.deepEqual(await response.json(), { error: "roleId must be a positive integer" });
+    assert.deepEqual(await response.json(), { error: "applicationId must be a positive integer" });
     assert.equal(navigationFindMany.mock.callCount(), 0);
 });
 
-test("filters navigation by provided roleId", async () => {
+test("filters navigation by provided applicationId", async () => {
     process.env.DATABASE_URL = "postgres://test";
 
     const expectedNavigation = [
@@ -41,7 +41,7 @@ test("filters navigation by provided roleId", async () => {
         navigation: { findMany: navigationFindMany },
         user: {
             findFirst: mock.fn(async () => {
-                throw new Error("user lookup should not run when roleId is provided");
+                throw new Error("user lookup should not run when applicationId is provided");
             }),
         },
     } as unknown as Parameters<typeof createNavigationHandler>[0]["prisma"];
@@ -49,11 +49,11 @@ test("filters navigation by provided roleId", async () => {
     const handler = createNavigationHandler({
         prisma,
         auth: mock.fn(async () => {
-            throw new Error("auth should not run when roleId is provided");
+            throw new Error("auth should not run when applicationId is provided");
         }),
     });
 
-    const response = await handler(new Request("https://example.com/api/navigation?roleId=2"));
+    const response = await handler(new Request("https://example.com/api/navigation?applicationId=2"));
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), expectedNavigation);
 
@@ -62,16 +62,16 @@ test("filters navigation by provided roleId", async () => {
     assert.ok(call);
     const [rawQuery] = call.arguments as unknown as [unknown];
     assert.ok(rawQuery && typeof rawQuery === "object");
-    const query = rawQuery as { where: { roleId: number } };
-    assert.equal(query.where.roleId, 2);
+    const query = rawQuery as { where: { applicationId: number } };
+    assert.equal(query.where.applicationId, 2);
 });
 
-test("falls back to the authenticated user's role when roleId is omitted", async () => {
+test("falls back to the authenticated user's application when applicationId is omitted", async () => {
     process.env.DATABASE_URL = "postgres://test";
     process.env.CLERK_SECRET_KEY = "sk_test";
 
     const authMock = mock.fn(async () => ({ userId: "user_abc" }));
-    const findFirstMock = mock.fn(async () => ({ roleId: 5 }));
+    const findFirstMock = mock.fn(async () => ({ applicationId: 5 }));
     const navigationResult = [
         {
             navigationName: "Settings",
@@ -100,6 +100,6 @@ test("falls back to the authenticated user's role when roleId is omitted", async
     assert.ok(call);
     const [rawQuery] = call.arguments as unknown as [unknown];
     assert.ok(rawQuery && typeof rawQuery === "object");
-    const query = rawQuery as { where: { roleId: number } };
-    assert.equal(query.where.roleId, 5);
+    const query = rawQuery as { where: { applicationId: number } };
+    assert.equal(query.where.applicationId, 5);
 });
