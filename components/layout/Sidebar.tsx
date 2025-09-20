@@ -54,6 +54,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const iconMap = {
     AcademicCapIcon,
@@ -123,30 +124,6 @@ export interface NavigationItem {
     subnavigation?: SubNavigationItem[];
 }
 
-const teams = [
-    {
-        id: 1,
-        name: "Heroicons",
-        href: "/heroicons",
-        initial: "H",
-        current: false,
-    },
-    {
-        id: 2,
-        name: "Tailwind Labs",
-        href: "/tailwindlabs",
-        initial: "T",
-        current: false,
-    },
-    {
-        id: 3,
-        name: "Workcation",
-        href: "/workcation",
-        initial: "W",
-        current: false,
-    },
-];
-
 function classNames(...classes: (string | undefined | null | false)[]) {
     return classes.filter(Boolean).join(" ");
 }
@@ -157,6 +134,69 @@ interface SidebarProps {
 
 export default function Sidebar({ navigation }: SidebarProps) {
     const pathname = usePathname();
+    const [openItems, setOpenItems] = useState<Set<string>>(() => {
+        const initial = new Set<string>();
+
+        navigation.forEach((item) => {
+            const hasChildren = (item.subnavigation?.length ?? 0) > 0;
+            if (!hasChildren) {
+                return;
+            }
+
+            const isActive =
+                item.current ||
+                pathname === item.href ||
+                (item.subnavigation ?? []).some(
+                    (child) => child.current || pathname === child.href
+                );
+
+            if (isActive) {
+                initial.add(item.href);
+            }
+        });
+
+        return initial;
+    });
+
+    useEffect(() => {
+        setOpenItems((previous) => {
+            const next = new Set(previous);
+
+            navigation.forEach((item) => {
+                const hasChildren = (item.subnavigation?.length ?? 0) > 0;
+                if (!hasChildren) {
+                    return;
+                }
+
+                const isActive =
+                    item.current ||
+                    pathname === item.href ||
+                    (item.subnavigation ?? []).some(
+                        (child) => child.current || pathname === child.href
+                    );
+
+                if (isActive) {
+                    next.add(item.href);
+                }
+            });
+
+            return next;
+        });
+    }, [navigation, pathname]);
+
+    const toggleItem = (href: string) => {
+        setOpenItems((previous) => {
+            const next = new Set(previous);
+
+            if (next.has(href)) {
+                next.delete(href);
+            } else {
+                next.add(href);
+            }
+
+            return next;
+        });
+    };
 
     return (
         <>
@@ -195,6 +235,11 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                 pathname === child.href
                                         );
 
+                                    const isOpen =
+                                        hasChildren && openItems.has(item.href);
+                                    const popoverId = `${item.href}-popover`;
+                                    const mobileListId = `${item.href}-mobile-list`;
+
                                     return (
                                         <li
                                             key={item.href}
@@ -205,37 +250,73 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                     : undefined
                                             )}
                                         >
-                                            <Link
-                                                {...(pathname === "/"
-                                                    ? { target: "_blank" }
-                                                    : {})}
-                                                rel="noopener noreferrer"
-                                                href={item.href}
-                                                className={classNames(
-                                                    isActive
-                                                        ? "bg-gray-800 text-white"
-                                                        : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                                                    "flex items-center gap-x-3 rounded-md p-2 text-sm/6 font-semibold transition"
-                                                )}
-                                            >
-                                                <Icon
-                                                    aria-hidden="true"
-                                                    className="size-6 shrink-0"
-                                                />
-                                                <span className="truncate">
-                                                    {item.name}
-                                                </span>
-                                                {hasChildren ? (
-                                                    <ChevronRightIcon
+                                            <div className="relative">
+                                                <Link
+                                                    {...(pathname === "/"
+                                                        ? { target: "_blank" }
+                                                        : {})}
+                                                    rel="noopener noreferrer"
+                                                    href={item.href}
+                                                    className={classNames(
+                                                        isActive
+                                                            ? "bg-gray-800 text-white"
+                                                            : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                                        "flex items-center gap-x-3 rounded-md p-2 pr-9 text-sm/6 font-semibold transition md:pr-2"
+                                                    )}
+                                                >
+                                                    <Icon
                                                         aria-hidden="true"
-                                                        className="ml-auto size-4 shrink-0 text-gray-500 transition group-hover:text-white"
+                                                        className="size-6 shrink-0"
                                                     />
+                                                    <span className="truncate">
+                                                        {item.name}
+                                                    </span>
+                                                    {hasChildren ? (
+                                                        <ChevronRightIcon
+                                                            aria-hidden="true"
+                                                            className={classNames(
+                                                                "ml-auto hidden size-4 shrink-0 text-gray-500 transition md:block md:group-hover:text-white",
+                                                                isOpen
+                                                                    ? "md:rotate-90"
+                                                                    : undefined
+                                                            )}
+                                                        />
+                                                    ) : null}
+                                                </Link>
+                                                {hasChildren ? (
+                                                    <button
+                                                        type="button"
+                                                        aria-controls={mobileListId}
+                                                        aria-expanded={isOpen}
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            toggleItem(item.href);
+                                                        }}
+                                                        className="absolute inset-y-0 right-2 flex items-center justify-center rounded-md p-1 text-gray-400 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:hidden"
+                                                    >
+                                                        <ChevronRightIcon
+                                                            aria-hidden="true"
+                                                            className={classNames(
+                                                                "size-4 transition-transform",
+                                                                isOpen
+                                                                    ? "rotate-90"
+                                                                    : "rotate-0"
+                                                            )}
+                                                        />
+                                                        <span className="sr-only">
+                                                            Toggle {item.name} navigation
+                                                        </span>
+                                                    </button>
                                                 ) : null}
-                                            </Link>
+                                            </div>
 
                                             {hasChildren ? (
                                                 <>
-                                                    <div className="hidden md:absolute md:left-full md:top-0 md:z-10 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
+                                                    <div
+                                                        id={popoverId}
+                                                        className="hidden md:absolute md:left-full md:top-0 md:z-10 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100"
+                                                    >
                                                         {item.subnavigation?.map(
                                                             (child) => {
                                                                 const ChildIcon =
@@ -279,6 +360,60 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                             }
                                                         )}
                                                     </div>
+                                                    <ul
+                                                        id={mobileListId}
+                                                        className={classNames(
+                                                            "md:hidden",
+                                                            isOpen
+                                                                ? "mt-1 space-y-1 pl-9"
+                                                                : "hidden"
+                                                        )}
+                                                    >
+                                                        {item.subnavigation?.map(
+                                                            (child) => {
+                                                                const ChildIcon =
+                                                                    child.icon
+                                                                        ? iconMap[
+                                                                              child.icon
+                                                                          ]
+                                                                        : iconMap[
+                                                                              fallbackIconKey
+                                                                          ];
+                                                                const childIsActive =
+                                                                    child.current ||
+                                                                    pathname ===
+                                                                        child.href;
+
+                                                                return (
+                                                                    <li
+                                                                        key={`${child.href}-mobile`}
+                                                                    >
+                                                                        <Link
+                                                                            href={
+                                                                                child.href
+                                                                            }
+                                                                            className={classNames(
+                                                                                childIsActive
+                                                                                    ? "bg-gray-800 text-white"
+                                                                                    : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                                                                                "flex items-center gap-x-2 rounded-md px-2 py-1 text-sm font-medium transition"
+                                                                            )}
+                                                                        >
+                                                                            <ChildIcon
+                                                                                aria-hidden="true"
+                                                                                className="size-4 shrink-0"
+                                                                            />
+                                                                            <span className="truncate">
+                                                                                {
+                                                                                    child.name
+                                                                                }
+                                                                            </span>
+                                                                        </Link>
+                                                                    </li>
+                                                                );
+                                                            }
+                                                        )}
+                                                    </ul>
                                                 </>
                                             ) : null}
                                         </li>
