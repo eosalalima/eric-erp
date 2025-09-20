@@ -237,12 +237,10 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                         );
 
                                     const isMobileOpen =
-                                        hasChildren &&
-                                        openItems.has(item.href);
+                                        hasChildren && openItems.has(item.href);
                                     const isDesktopExpanded =
                                         hasChildren &&
-                                        (hoveredItem === item.href ||
-                                            isActive);
+                                        (hoveredItem === item.href || isActive);
                                     const mobileListId = `${item.href}-mobile-list`;
                                     const handleMouseEnter = () =>
                                         setHoveredItem(item.href);
@@ -417,10 +415,10 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                                                 "flex items-center gap-x-2 rounded-md px-2 py-1 text-sm font-medium transition"
                                                                             )}
                                                                         >
-                                                                            <ChildIcon
+                                                                            {/* <ChildIcon
                                                                                 aria-hidden="true"
                                                                                 className="size-4 shrink-0"
-                                                                            />
+                                                                            /> */}
                                                                             <span className="truncate">
                                                                                 {
                                                                                     child.name
