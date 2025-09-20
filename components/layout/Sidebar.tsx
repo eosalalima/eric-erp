@@ -54,7 +54,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent } from "react";
 
 const iconMap = {
     AcademicCapIcon,
@@ -157,6 +157,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
 
         return initial;
     });
+    const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     useEffect(() => {
         setOpenItems((previous) => {
@@ -235,10 +236,43 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                 pathname === child.href
                                         );
 
-                                    const isOpen =
-                                        hasChildren && openItems.has(item.href);
-                                    const popoverId = `${item.href}-popover`;
+                                    const isMobileOpen =
+                                        hasChildren &&
+                                        openItems.has(item.href);
+                                    const isDesktopExpanded =
+                                        hasChildren &&
+                                        (hoveredItem === item.href ||
+                                            isActive);
                                     const mobileListId = `${item.href}-mobile-list`;
+                                    const handleMouseEnter = () =>
+                                        setHoveredItem(item.href);
+                                    const handleMouseLeave = () => {
+                                        setHoveredItem((current) =>
+                                            current === item.href
+                                                ? null
+                                                : current
+                                        );
+                                    };
+                                    const handleBlur = (
+                                        event: FocusEvent<HTMLLIElement>
+                                    ) => {
+                                        const nextTarget = event.relatedTarget;
+                                        if (
+                                            nextTarget &&
+                                            nextTarget instanceof Node &&
+                                            event.currentTarget.contains(
+                                                nextTarget
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
+                                        setHoveredItem((current) =>
+                                            current === item.href
+                                                ? null
+                                                : current
+                                        );
+                                    };
 
                                     return (
                                         <li
@@ -249,6 +283,26 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                     ? "group"
                                                     : undefined
                                             )}
+                                            onMouseEnter={
+                                                hasChildren
+                                                    ? handleMouseEnter
+                                                    : undefined
+                                            }
+                                            onFocus={
+                                                hasChildren
+                                                    ? handleMouseEnter
+                                                    : undefined
+                                            }
+                                            onMouseLeave={
+                                                hasChildren
+                                                    ? handleMouseLeave
+                                                    : undefined
+                                            }
+                                            onBlur={
+                                                hasChildren
+                                                    ? handleBlur
+                                                    : undefined
+                                            }
                                         >
                                             <div className="relative">
                                                 <Link
@@ -276,7 +330,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                             aria-hidden="true"
                                                             className={classNames(
                                                                 "ml-auto hidden size-4 shrink-0 text-gray-500 transition md:block md:group-hover:text-white",
-                                                                isOpen
+                                                                isDesktopExpanded
                                                                     ? "md:rotate-90"
                                                                     : undefined
                                                             )}
@@ -289,7 +343,9 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                         aria-controls={
                                                             mobileListId
                                                         }
-                                                        aria-expanded={isOpen}
+                                                        aria-expanded={
+                                                            isMobileOpen
+                                                        }
                                                         onClick={(event) => {
                                                             event.preventDefault();
                                                             event.stopPropagation();
@@ -303,7 +359,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                             aria-hidden="true"
                                                             className={classNames(
                                                                 "size-4 transition-transform",
-                                                                isOpen
+                                                                isMobileOpen
                                                                     ? "rotate-90"
                                                                     : "rotate-0"
                                                             )}
@@ -318,60 +374,16 @@ export default function Sidebar({ navigation }: SidebarProps) {
 
                                             {hasChildren ? (
                                                 <>
-                                                    <div
-                                                        id={popoverId}
-                                                        className="hidden md:absolute md:left-full md:top-0 md:z-50 md:ml-2 md:flex md:min-w-[12rem] md:flex-col md:gap-1 md:rounded-lg md:bg-gray-900 md:p-3 md:text-sm md:shadow-lg md:ring-1 md:ring-black/20 md:opacity-0 md:pointer-events-none md:transition md:duration-150 md:ease-out md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 z-50"
-                                                    >
-                                                        {item.subnavigation?.map(
-                                                            (child) => {
-                                                                const ChildIcon =
-                                                                    child.icon
-                                                                        ? iconMap[
-                                                                              child
-                                                                                  .icon
-                                                                          ]
-                                                                        : iconMap[
-                                                                              fallbackIconKey
-                                                                          ];
-                                                                const childIsActive =
-                                                                    child.current ||
-                                                                    pathname ===
-                                                                        child.href;
-
-                                                                return (
-                                                                    <Link
-                                                                        key={`${child.href}-popover`}
-                                                                        href={
-                                                                            child.href
-                                                                        }
-                                                                        className={classNames(
-                                                                            childIsActive
-                                                                                ? "bg-gray-800 text-white"
-                                                                                : "text-gray-300 hover:bg-gray-800 hover:text-white",
-                                                                            "flex items-center gap-x-2 rounded-md px-2 py-1 font-medium transition"
-                                                                        )}
-                                                                    >
-                                                                        <ChildIcon
-                                                                            aria-hidden="true"
-                                                                            className="size-4 shrink-0"
-                                                                        />
-                                                                        <span className="truncate">
-                                                                            {
-                                                                                child.name
-                                                                            }
-                                                                        </span>
-                                                                    </Link>
-                                                                );
-                                                            }
-                                                        )}
-                                                    </div>
                                                     <ul
                                                         id={mobileListId}
                                                         className={classNames(
-                                                            "md:hidden",
-                                                            isOpen
-                                                                ? "mt-1 space-y-1 pl-9"
-                                                                : "hidden"
+                                                            "space-y-1 pl-9 text-sm font-medium transition",
+                                                            isMobileOpen
+                                                                ? "mt-1"
+                                                                : "hidden",
+                                                            isDesktopExpanded
+                                                                ? "md:mt-2 md:space-y-1 md:pl-9 md:block"
+                                                                : "md:hidden"
                                                         )}
                                                     >
                                                         {item.subnavigation?.map(
