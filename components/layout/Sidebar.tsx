@@ -161,7 +161,7 @@ export default function Sidebar({ navigation }: SidebarProps) {
     return (
         <>
             {/* Sidebar component, swap this element with another sidebar if you like */}
-            <div className="fixed flex flex-col h-full w-64 gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-4 ring-1 ring-white/10">
+            <div className="fixed flex flex-col h-full w-64 gap-y-5 overflow-y-auto overflow-x-visible bg-gray-900 px-6 pb-4 ring-1 ring-white/10">
                 <div className="flex h-16 shrink-0 items-center">
                     <Image
                         alt="ERIC ERP"
