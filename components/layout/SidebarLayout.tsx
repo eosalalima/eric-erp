@@ -76,12 +76,22 @@ export default function SidebarLayout({
             return;
         }
 
+        interface NavigationApiSubItem {
+            navigationName?: string;
+            subNavigationName?: string;
+            href: string;
+            icon?: NavigationItem["icon"];
+            current?: boolean;
+            sortOrder?: number | null;
+        }
+
         interface NavigationApiItem {
             navigationName: string;
             href: string;
             icon: NavigationItem["icon"];
             current: boolean;
             sortOrder: number;
+            subnavigation?: NavigationApiSubItem[];
         }
 
         const fetchNavigation = async () => {
@@ -138,12 +148,36 @@ export default function SidebarLayout({
                 );
 
                 setNavigation(
-                    sorted.map((item) => ({
-                        name: item.navigationName,
-                        href: item.href,
-                        icon: item.icon,
-                        current: item.current,
-                    }))
+                    sorted.map((item) => {
+                        const childItems = Array.isArray(item.subnavigation)
+                            ? [...item.subnavigation]
+                                  .sort(
+                                      (a, b) =>
+                                          (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+                                  )
+                                  .map((child) => ({
+                                      name:
+                                          child.navigationName ??
+                                          child.subNavigationName ??
+                                          "",
+                                      href: child.href,
+                                      icon: child.icon,
+                                      current: child.current ?? false,
+                                  }))
+                                  .filter((child) => child.name && child.href)
+                            : undefined;
+
+                        return {
+                            name: item.navigationName,
+                            href: item.href,
+                            icon: item.icon,
+                            current: item.current,
+                            subnavigation:
+                                childItems && childItems.length > 0
+                                    ? childItems
+                                    : undefined,
+                        } satisfies NavigationItem;
+                    })
                 );
             } catch (error) {
                 console.error(
