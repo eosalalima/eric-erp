@@ -9,8 +9,15 @@ import { SignedIn } from "@clerk/nextjs";
 // Mapping of roleId to route
 const roleRouteTable: { roleId: number; route: string }[] = [
     { roleId: 1, route: "/" },
-    { roleId: 2, route: "/modules/finance-accounting" }, 
+    { roleId: 2, route: "/modules/finance-accounting" },
     { roleId: 3, route: "/modules/human-resource" },
+    { roleId: 4, route: "/modules/supply-chain" },
+    { roleId: 5, route: "/modules/customer-relationship" },
+    { roleId: 6, route: "/modules/sales-distribution" },
+    { roleId: 7, route: "/modules/project-management" },
+    { roleId: 8, route: "/modules/business-intelligence" },
+    { roleId: 9, route: "/modules/compliance-risk" },
+    { roleId: 10, route: "/modules/ecommerce-customer-portal" },
     // Add more mappings as needed
 ];
 
@@ -27,7 +34,7 @@ export default function SidebarLayout({
 
     // Get the current route
     const [currentRoute, setCurrentRoute] = useState<string>("");
-    const [roleId, setRoleId] = useState<number | null>(null);  
+    const [roleId, setRoleId] = useState<number | null>(null);
 
     useEffect(() => {
         setCurrentRoute(window.location.pathname);
@@ -46,7 +53,10 @@ export default function SidebarLayout({
             newRole = 1; // Example roleId for home page
         } else {
             // Match the first two levels of the route (e.g., /modules/finance-accounting)
-            const firstTwoLevels = currentRoute.split("/").slice(0, 3).join("/");
+            const firstTwoLevels = currentRoute
+                .split("/")
+                .slice(0, 3)
+                .join("/");
             const matchedRole = roleRouteTable.find(
                 (entry) => entry.route === firstTwoLevels
             );
@@ -74,7 +84,9 @@ export default function SidebarLayout({
 
         const fetchNavigation = async () => {
             try {
-                const response = await fetch(`/api/navigation?roleId=${roleId}`);
+                const response = await fetch(
+                    `/api/navigation?roleId=${roleId}`
+                );
 
                 if (!response.ok) {
                     console.error(

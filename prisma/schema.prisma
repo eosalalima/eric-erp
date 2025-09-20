@@ -228,7 +228,7 @@ model subledger_link {
 
 model navigation {
   id             String  @id(map: "Navigation_pkey") @db.Uuid
-  roleId         Int
+  applicationId  Int
   navigationName String
   href           String
   icon           String
