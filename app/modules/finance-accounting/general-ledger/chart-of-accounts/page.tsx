@@ -53,6 +53,8 @@ export default function ChartOfAccountsPage() {
         fetchAccounts();
     }, []);
 
+    const isLoadingAccounts = !error && accounts.length === 0;
+
     return (
         <>
             <SignedIn>
@@ -257,17 +259,28 @@ export default function ChartOfAccountsPage() {
                                                                 id="parent-account"
                                                                 name="parent-account"
                                                                 autoComplete="parent-account"
+                                                                defaultValue=""
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
-                                                                <option>
-                                                                    Assets
+                                                                <option
+                                                                    value=""
+                                                                    disabled
+                                                                    hidden
+                                                                >
+                                                                    {isLoadingAccounts
+                                                                        ? "Loading accounts..."
+                                                                        : "No parent account"}
                                                                 </option>
-                                                                <option>
-                                                                    Liability
-                                                                </option>
-                                                                <option>
-                                                                    Equity
-                                                                </option>
+                                                                {accounts.map(
+                                                                    (account) => (
+                                                                        <option
+                                                                            key={account.id}
+                                                                            value={account.id}
+                                                                        >
+                                                                            {`${account.code} – ${account.name}`}
+                                                                        </option>
+                                                                    )
+                                                                )}
                                                             </select>
                                                             <ChevronDownIcon
                                                                 aria-hidden="true"
