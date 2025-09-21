@@ -3,7 +3,7 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
 import ChartOfAccountsTable from "./ChartOfAccountsTable";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -35,6 +35,7 @@ export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -54,6 +55,79 @@ export default function ChartOfAccountsPage() {
     }, []);
 
     const isLoadingAccounts = !error && accounts.length === 0;
+
+    const handleSave = async () => {
+        if (!formRef.current) {
+            return;
+        }
+
+        const formData = new FormData(formRef.current);
+
+        const code = formData.get("code");
+        const name = formData.get("name");
+        const description = formData.get("description");
+        const levelValue = formData.get("level");
+        const parentAccount = formData.get("parent-account");
+        const accountType = formData.get("account-type");
+        const normalBalanceSelection = formData.get("normal-balance");
+        const normalBalance =
+            typeof normalBalanceSelection === "string" &&
+            normalBalanceSelection.toLowerCase() === "credit"
+                ? "CREDIT"
+                : "DEBIT";
+
+        let level: number | null = null;
+        if (typeof levelValue === "string" && levelValue !== "") {
+            const parsedLevel = Number(levelValue);
+            level = Number.isNaN(parsedLevel) ? null : parsedLevel;
+        }
+
+        const payload = {
+            code: typeof code === "string" ? code : "",
+            name: typeof name === "string" ? name : "",
+            description:
+                typeof description === "string" && description.trim() !== ""
+                    ? description
+                    : null,
+            level,
+            parent_id:
+                typeof parentAccount === "string" && parentAccount !== ""
+                    ? parentAccount
+                    : null,
+            type:
+                typeof accountType === "string" && accountType !== ""
+                    ? accountType
+                    : "ASSET",
+            normal_balance: normalBalance,
+            is_postable: formData.get("is-postable") === "on",
+            status: formData.get("is-active") === "on" ? "ACTIVE" : "INACTIVE",
+        };
+
+        try {
+            setError(null);
+            const response = await fetch("/api/finance-accounting/accounts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const newAccount = (await response.json()) as Account;
+            setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
+            formRef.current.reset();
+            setOpen(false);
+        } catch (saveError) {
+            console.error(saveError);
+            setError(
+                "Unable to save account at this time. Please try again later."
+            );
+        }
+    };
 
     return (
         <>
@@ -166,7 +240,7 @@ export default function ChartOfAccountsPage() {
                                             </div>
 
                                             <div className="relative flex-1 px-4 py-6 sm:px-6 overflow-auto">
-                                                <form>
+                                                <form ref={formRef}>
                                                     <div className="sm:col-span-4">
                                                         <label
                                                             htmlFor="username"
@@ -337,22 +411,22 @@ export default function ChartOfAccountsPage() {
 
                                                     <div className="sm:col-span-3 mt-4">
                                                         <label
-                                                            htmlFor="account-type"
+                                                            htmlFor="normal-balance"
                                                             className="block text-sm/6 font-medium text-gray-900"
                                                         >
                                                             Normal Balance
                                                         </label>
                                                         <div className="mt-2 grid grid-cols-1">
                                                             <select
-                                                                id="account-type"
-                                                                name="account-type"
-                                                                autoComplete="account-type"
+                                                                id="normal-balance"
+                                                                name="normal-balance"
+                                                                autoComplete="normal-balance"
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
-                                                                <option>
+                                                                <option value="Debit">
                                                                     Debit
                                                                 </option>
-                                                                <option>
+                                                                <option value="Credit">
                                                                     Credit
                                                                 </option>
                                                             </select>
@@ -417,7 +491,7 @@ export default function ChartOfAccountsPage() {
                                                 <button
                                                     type="button"
                                                     className="rounded px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    // TODO: Add save logic here
+                                                    onClick={handleSave}
                                                 >
                                                     Save
                                                 </button>
