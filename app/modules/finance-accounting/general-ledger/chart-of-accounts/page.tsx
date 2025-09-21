@@ -272,10 +272,16 @@ export default function ChartOfAccountsPage() {
                                                                         : "No parent account"}
                                                                 </option>
                                                                 {accounts.map(
-                                                                    (account) => (
+                                                                    (
+                                                                        account
+                                                                    ) => (
                                                                         <option
-                                                                            key={account.id}
-                                                                            value={account.id}
+                                                                            key={
+                                                                                account.id
+                                                                            }
+                                                                            value={
+                                                                                account.id
+                                                                            }
                                                                         >
                                                                             {`${account.code} – ${account.name}`}
                                                                         </option>
@@ -304,13 +310,22 @@ export default function ChartOfAccountsPage() {
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
                                                                 <option>
-                                                                    Assets
+                                                                    ASSET
                                                                 </option>
                                                                 <option>
-                                                                    Liability
+                                                                    LIABILITY
                                                                 </option>
                                                                 <option>
-                                                                    Equity
+                                                                    EQUITY
+                                                                </option>
+                                                                <option>
+                                                                    REVENUE
+                                                                </option>
+                                                                <option>
+                                                                    EXPENSE
+                                                                </option>
+                                                                <option>
+                                                                    OFF_BALANCE
                                                                 </option>
                                                             </select>
                                                             <ChevronDownIcon
