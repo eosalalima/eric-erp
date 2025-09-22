@@ -16,9 +16,9 @@ type NormalBalance = (typeof NORMAL_BALANCES)[number];
 
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
-    const accountId = params.id;
+    const { id: accountId } = await context.params;
 
     if (!accountId || typeof accountId !== "string") {
         return NextResponse.json({ error: "Invalid account id" }, { status: 400 });
