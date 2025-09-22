@@ -25,19 +25,8 @@ const items = [
     },
 ];
 
-type Account = {
-    id: string;
-    code: string;
-    name: string;
-    type: string;
-    normal_balance: string;
-    status: string;
-    ledger_id: string;
-    parent_id: string | null;
-    level: number;
-    description?: string | null;
-    is_postable?: boolean;
-};
+// Import the Account type from ChartOfAccountsTable
+import type { Account } from "./ChartOfAccountsTable";
 
 type FormValues = {
     code: string;
@@ -81,9 +70,8 @@ export default function ChartOfAccountsPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [formValues, setFormValues] = useState<FormValues>(defaultFormValues);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [touchedFields, setTouchedFields] = useState<
-        Record<keyof FormValues, boolean>
-    >(defaultTouchedFields);
+    const [touchedFields, setTouchedFields] =
+        useState<Record<keyof FormValues, boolean>>(defaultTouchedFields);
     const formRef = useRef<HTMLFormElement>(null);
 
     const validateRequiredFields = (values: FormValues) => {
@@ -117,12 +105,14 @@ export default function ChartOfAccountsPage() {
         };
     };
 
-    const handleFieldChange = (
-        field: keyof FormValues
-    ) =>
+    const handleFieldChange =
+        (field: keyof FormValues) =>
         (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
             const value = event.target.value;
-            const updatedValues = { ...formValues, [field]: value } as FormValues;
+            const updatedValues = {
+                ...formValues,
+                [field]: value,
+            } as FormValues;
             const updatedTouched = {
                 ...touchedFields,
                 [field]: true,
@@ -133,8 +123,8 @@ export default function ChartOfAccountsPage() {
 
             const { errors } = validateRequiredFields(updatedValues);
             const filteredErrors = Object.fromEntries(
-                Object.entries(errors).filter(([key]) =>
-                    updatedTouched[key as keyof FormValues]
+                Object.entries(errors).filter(
+                    ([key]) => updatedTouched[key as keyof FormValues]
                 )
             ) as Record<string, string>;
 
@@ -155,8 +145,8 @@ export default function ChartOfAccountsPage() {
 
         const { errors } = validateRequiredFields(formValues);
         const filteredErrors = Object.fromEntries(
-            Object.entries(errors).filter(([key]) =>
-                updatedTouched[key as keyof FormValues]
+            Object.entries(errors).filter(
+                ([key]) => updatedTouched[key as keyof FormValues]
             )
         ) as Record<string, string>;
 
@@ -569,7 +559,8 @@ export default function ChartOfAccountsPage() {
                                         <div className="fixed top-4 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
                                             <div
                                                 className={`rounded-md p-4 ${
-                                                    saveStatus.type === "success"
+                                                    saveStatus.type ===
+                                                    "success"
                                                         ? "bg-green-100"
                                                         : "bg-red-100"
                                                 }`}
@@ -617,7 +608,9 @@ export default function ChartOfAccountsPage() {
                                                     onEdit={(account) => {
                                                         handleEdit(account.id);
                                                     }}
-                                                    onDelete={handleDeleteRequest}
+                                                    onDelete={
+                                                        handleDeleteRequest
+                                                    }
                                                 />
                                             </div>
                                         </>
@@ -707,16 +700,29 @@ export default function ChartOfAccountsPage() {
                                                                     type="text"
                                                                     placeholder=""
                                                                     required
-                                                                    value={formValues.code}
-                                                                    onChange={handleFieldChange("code")}
-                                                                    onBlur={handleFieldBlur("code")}
-                                                                    aria-invalid={Boolean(formErrors.code)}
+                                                                    value={
+                                                                        formValues.code
+                                                                    }
+                                                                    onChange={handleFieldChange(
+                                                                        "code"
+                                                                    )}
+                                                                    onBlur={handleFieldBlur(
+                                                                        "code"
+                                                                    )}
+                                                                    aria-invalid={Boolean(
+                                                                        formErrors.code
+                                                                    )}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
                                                             {formErrors.code ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.code}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.code
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -743,16 +749,29 @@ export default function ChartOfAccountsPage() {
                                                                     type="text"
                                                                     placeholder=""
                                                                     required
-                                                                    value={formValues.name}
-                                                                    onChange={handleFieldChange("name")}
-                                                                    onBlur={handleFieldBlur("name")}
-                                                                    aria-invalid={Boolean(formErrors.name)}
+                                                                    value={
+                                                                        formValues.name
+                                                                    }
+                                                                    onChange={handleFieldChange(
+                                                                        "name"
+                                                                    )}
+                                                                    onBlur={handleFieldBlur(
+                                                                        "name"
+                                                                    )}
+                                                                    aria-invalid={Boolean(
+                                                                        formErrors.name
+                                                                    )}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
                                                             {formErrors.name ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.name}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.name
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -805,16 +824,29 @@ export default function ChartOfAccountsPage() {
                                                                     type="number"
                                                                     placeholder=""
                                                                     required
-                                                                    value={formValues.level}
-                                                                    onChange={handleFieldChange("level")}
-                                                                    onBlur={handleFieldBlur("level")}
-                                                                    aria-invalid={Boolean(formErrors.level)}
+                                                                    value={
+                                                                        formValues.level
+                                                                    }
+                                                                    onChange={handleFieldChange(
+                                                                        "level"
+                                                                    )}
+                                                                    onBlur={handleFieldBlur(
+                                                                        "level"
+                                                                    )}
+                                                                    aria-invalid={Boolean(
+                                                                        formErrors.level
+                                                                    )}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
                                                             {formErrors.level ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.level}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.level
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -886,22 +918,42 @@ export default function ChartOfAccountsPage() {
                                                                 name="account-type"
                                                                 autoComplete="account-type"
                                                                 required
-                                                                value={formValues.accountType}
-                                                                onChange={handleFieldChange("accountType")}
-                                                                onBlur={handleFieldBlur("accountType")}
-                                                                aria-invalid={Boolean(formErrors.accountType)}
+                                                                value={
+                                                                    formValues.accountType
+                                                                }
+                                                                onChange={handleFieldChange(
+                                                                    "accountType"
+                                                                )}
+                                                                onBlur={handleFieldBlur(
+                                                                    "accountType"
+                                                                )}
+                                                                aria-invalid={Boolean(
+                                                                    formErrors.accountType
+                                                                )}
                                                                 className={`col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
                                                                     formErrors.accountType
                                                                         ? "outline-red-500"
                                                                         : "outline-gray-300"
                                                                 }`}
                                                             >
-                                                                <option value="ASSET">Asset</option>
-                                                                <option value="LIABILITY">Liability</option>
-                                                                <option value="EQUITY">Equity</option>
-                                                                <option value="REVENUE">Revenue</option>
-                                                                <option value="EXPENSE">Expense</option>
-                                                                <option value="OFF_BALANCE">Off Balance</option>
+                                                                <option value="ASSET">
+                                                                    Asset
+                                                                </option>
+                                                                <option value="LIABILITY">
+                                                                    Liability
+                                                                </option>
+                                                                <option value="EQUITY">
+                                                                    Equity
+                                                                </option>
+                                                                <option value="REVENUE">
+                                                                    Revenue
+                                                                </option>
+                                                                <option value="EXPENSE">
+                                                                    Expense
+                                                                </option>
+                                                                <option value="OFF_BALANCE">
+                                                                    Off Balance
+                                                                </option>
                                                             </select>
                                                             <ChevronDownIcon
                                                                 aria-hidden="true"
@@ -909,8 +961,13 @@ export default function ChartOfAccountsPage() {
                                                             />
                                                         </div>
                                                         {formErrors.accountType ? (
-                                                            <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                {formErrors.accountType}
+                                                            <p
+                                                                className="mt-2 text-sm text-red-600"
+                                                                role="alert"
+                                                            >
+                                                                {
+                                                                    formErrors.accountType
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -928,18 +985,30 @@ export default function ChartOfAccountsPage() {
                                                                 name="normal-balance"
                                                                 autoComplete="normal-balance"
                                                                 required
-                                                                value={formValues.normalBalance}
-                                                                onChange={handleFieldChange("normalBalance")}
-                                                                onBlur={handleFieldBlur("normalBalance")}
-                                                                aria-invalid={Boolean(formErrors.normalBalance)}
+                                                                value={
+                                                                    formValues.normalBalance
+                                                                }
+                                                                onChange={handleFieldChange(
+                                                                    "normalBalance"
+                                                                )}
+                                                                onBlur={handleFieldBlur(
+                                                                    "normalBalance"
+                                                                )}
+                                                                aria-invalid={Boolean(
+                                                                    formErrors.normalBalance
+                                                                )}
                                                                 className={`col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
                                                                     formErrors.normalBalance
                                                                         ? "outline-red-500"
                                                                         : "outline-gray-300"
                                                                 }`}
                                                             >
-                                                                <option value="Debit">Debit</option>
-                                                                <option value="Credit">Credit</option>
+                                                                <option value="Debit">
+                                                                    Debit
+                                                                </option>
+                                                                <option value="Credit">
+                                                                    Credit
+                                                                </option>
                                                             </select>
                                                             <ChevronDownIcon
                                                                 aria-hidden="true"
@@ -947,8 +1016,13 @@ export default function ChartOfAccountsPage() {
                                                             />
                                                         </div>
                                                         {formErrors.normalBalance ? (
-                                                            <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                {formErrors.normalBalance}
+                                                            <p
+                                                                className="mt-2 text-sm text-red-600"
+                                                                role="alert"
+                                                            >
+                                                                {
+                                                                    formErrors.normalBalance
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -1014,7 +1088,8 @@ export default function ChartOfAccountsPage() {
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                                                     onClick={() => {
                                                         handleDrawerClose({
-                                                            clearSaveStatus: false,
+                                                            clearSaveStatus:
+                                                                false,
                                                         });
                                                     }}
                                                 >
@@ -1040,7 +1115,10 @@ export default function ChartOfAccountsPage() {
                         onClose={resetDeleteState}
                         className="relative z-50"
                     >
-                        <div className="fixed inset-0 bg-gray-500/75" aria-hidden="true" />
+                        <div
+                            className="fixed inset-0 bg-gray-500/75"
+                            aria-hidden="true"
+                        />
                         <div className="fixed inset-0 flex items-center justify-center p-4">
                             <DialogPanel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl">
                                 <div className="p-6">
@@ -1048,8 +1126,8 @@ export default function ChartOfAccountsPage() {
                                         Confirm deletion
                                     </DialogTitle>
                                     <p className="mt-4 text-sm text-gray-600">
-                                        Are you sure you want to delete the account
-                                        {" "}
+                                        Are you sure you want to delete the
+                                        account{" "}
                                         <span className="font-medium text-gray-900">
                                             {pendingDeleteAccount
                                                 ? `${pendingDeleteAccount.code} – ${pendingDeleteAccount.name}`
@@ -1058,7 +1136,10 @@ export default function ChartOfAccountsPage() {
                                         ? This action cannot be undone.
                                     </p>
                                     {deleteError ? (
-                                        <p className="mt-4 text-sm text-red-600" role="alert">
+                                        <p
+                                            className="mt-4 text-sm text-red-600"
+                                            role="alert"
+                                        >
                                             {deleteError}
                                         </p>
                                     ) : null}
