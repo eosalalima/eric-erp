@@ -32,8 +32,8 @@ model account {
   parent_id              String?                  @db.Uuid
   type                   account_type
   normal_balance         normal_balance
-  is_postable            Boolean                  @default(true)
-  status                 String                   @default("ACTIVE")
+  is_postable            Boolean?                 @default(true)
+  status                 String?                  @default("ACTIVE")
   ledger                 ledger                   @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   account                account?                 @relation("accountToaccount", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_account          account[]                @relation("accountToaccount")
