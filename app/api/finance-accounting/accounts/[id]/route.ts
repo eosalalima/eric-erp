@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/lib/prisma";
 
 const ACCOUNT_TYPES = [
@@ -21,7 +21,10 @@ export async function PUT(
     const { id: accountId } = await context.params;
 
     if (!accountId || typeof accountId !== "string") {
-        return NextResponse.json({ error: "Invalid account id" }, { status: 400 });
+        return NextResponse.json(
+            { error: "Invalid account id" },
+            { status: 400 }
+        );
     }
 
     try {
@@ -62,13 +65,16 @@ export async function PUT(
         }
 
         const accountType =
-            typeof type === "string" && ACCOUNT_TYPES.includes(type.toUpperCase() as AccountType)
+            typeof type === "string" &&
+            ACCOUNT_TYPES.includes(type.toUpperCase() as AccountType)
                 ? (type.toUpperCase() as AccountType)
                 : "ASSET";
 
         const normalBalance =
             typeof normal_balance === "string" &&
-            NORMAL_BALANCES.includes(normal_balance.toUpperCase() as NormalBalance)
+            NORMAL_BALANCES.includes(
+                normal_balance.toUpperCase() as NormalBalance
+            )
                 ? (normal_balance.toUpperCase() as NormalBalance)
                 : "DEBIT";
 
@@ -78,7 +84,9 @@ export async function PUT(
                 : 0;
 
         const parentId =
-            typeof parent_id === "string" && parent_id.trim() !== "" ? parent_id : null;
+            typeof parent_id === "string" && parent_id.trim() !== ""
+                ? parent_id
+                : null;
 
         const sanitizedDescription =
             typeof description === "string" && description.trim() !== ""
@@ -107,10 +115,13 @@ export async function PUT(
         return NextResponse.json(updatedAccount);
     } catch (error) {
         if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error instanceof PrismaClientKnownRequestError &&
             error.code === "P2025"
         ) {
-            return NextResponse.json({ error: "Account not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Account not found" },
+                { status: 404 }
+            );
         }
 
         console.error("Failed to update account", error);
