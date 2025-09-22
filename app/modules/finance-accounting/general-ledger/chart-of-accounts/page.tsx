@@ -7,6 +7,10 @@ import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+    CheckCircleIcon,
+    XCircleIcon as AlertXCircleIcon,
+} from "@heroicons/react/20/solid";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
 
 const items = [
@@ -38,7 +42,10 @@ type Account = {
 export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
-    const [error, setError] = useState<string | null>(null);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+    const [saveStatus, setSaveStatus] = useState<
+        { type: "success" | "error"; message: string } | null
+    >(null);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
     );
@@ -53,7 +60,7 @@ export default function ChartOfAccountsPage() {
                 setAccounts(data);
             } catch (fetchError) {
                 console.error(fetchError);
-                setError(
+                setFetchError(
                     "Unable to load accounts at this time. Please try again later."
                 );
             }
@@ -127,7 +134,7 @@ export default function ChartOfAccountsPage() {
         }
     }, [selectedAccount, open]);
 
-    const isLoadingAccounts = !error && accounts.length === 0;
+    const isLoadingAccounts = !fetchError && accounts.length === 0;
 
     const handleEdit = (accountId: string) => {
         const accountToEdit = accounts.find(
@@ -139,8 +146,20 @@ export default function ChartOfAccountsPage() {
 
         console.log("Editing account:", accountToEdit);
 
+        setSaveStatus(null);
         setOpen(true);
         setSelectedAccount(accountToEdit);
+    };
+
+    const handleDrawerClose = (options?: { clearSaveStatus?: boolean }) => {
+        setOpen(false);
+        setSelectedAccount(null);
+        if (formRef.current) {
+            formRef.current.reset();
+        }
+        if (options?.clearSaveStatus ?? true) {
+            setSaveStatus(null);
+        }
     };
 
     const handleSave = async () => {
@@ -148,6 +167,7 @@ export default function ChartOfAccountsPage() {
             return;
         }
 
+        setSaveStatus(null);
         const formData = new FormData(formRef.current);
 
         const code = formData.get("code");
@@ -187,7 +207,10 @@ export default function ChartOfAccountsPage() {
         }
 
         if (!ledgerId) {
-            setError("Unable to determine the ledger for the new account.");
+            setSaveStatus({
+                type: "error",
+                message: "Unable to determine the ledger for the new account.",
+            });
             return;
         }
 
@@ -211,7 +234,6 @@ export default function ChartOfAccountsPage() {
         };
 
         try {
-            setError(null);
             if (selectedAccount) {
                 const response = await fetch(
                     `/api/finance-accounting/accounts/${selectedAccount.id}`,
@@ -256,14 +278,17 @@ export default function ChartOfAccountsPage() {
                 const newAccount = (await response.json()) as Account;
                 setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             }
-            formRef.current.reset();
-            setOpen(false);
-            setSelectedAccount(null);
+            setSaveStatus({
+                type: "success",
+                message: "Successfully saved.",
+            });
+            handleDrawerClose({ clearSaveStatus: false });
         } catch (saveError) {
             console.error(saveError);
-            setError(
-                "Unable to save account at this time. Please try again later."
-            );
+            setSaveStatus({
+                type: "error",
+                message: "An error occurred during save.",
+            });
         }
     };
 
@@ -280,6 +305,7 @@ export default function ChartOfAccountsPage() {
                             type="button"
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
+                                setSaveStatus(null);
                                 setSelectedAccount(null);
 
                                 if (formRef.current) {
@@ -310,10 +336,40 @@ export default function ChartOfAccountsPage() {
                         <div className="-mx-4 -my-2 flex-1 min-h-0 overflow-x-auto sm:-mx-6 lg:-mx-8">
                             <div className="flex h-full min-w-full flex-col py-2 align-middle sm:px-6 lg:px-8">
                                 <div className="flex flex-1 min-h-0 flex-col overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
-                                    {error ? (
+                                    {saveStatus ? (
+                                        <div
+                                            className={`mx-4 mt-4 rounded-md p-4 ${
+                                                saveStatus.type === "success"
+                                                    ? "bg-green-50"
+                                                    : "bg-red-50"
+                                            }`}
+                                        >
+                                            <div className="flex">
+                                                <div className="flex-shrink-0">
+                                                    {saveStatus.type === "success" ? (
+                                                        <CheckCircleIcon className="size-5 text-green-400" />
+                                                    ) : (
+                                                        <AlertXCircleIcon className="size-5 text-red-400" />
+                                                    )}
+                                                </div>
+                                                <div className="ml-3">
+                                                    <p
+                                                        className={`text-sm font-medium ${
+                                                            saveStatus.type === "success"
+                                                                ? "text-green-800"
+                                                                : "text-red-800"
+                                                        }`}
+                                                    >
+                                                        {saveStatus.message}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                    {fetchError ? (
                                         <div className="bg-red-50 p-4">
                                             <p className="text-sm text-red-700">
-                                                {error}
+                                                {fetchError}
                                             </p>
                                         </div>
                                     ) : accounts.length === 0 ? (
@@ -342,10 +398,7 @@ export default function ChartOfAccountsPage() {
                         onClose={(value) => {
                             setOpen(value);
                             if (!value) {
-                                setSelectedAccount(null);
-                                if (formRef.current) {
-                                    formRef.current.reset();
-                                }
+                                handleDrawerClose();
                             }
                         }}
                         className="relative z-10"
@@ -371,15 +424,7 @@ export default function ChartOfAccountsPage() {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setOpen(false);
-                                                                setSelectedAccount(
-                                                                    null
-                                                                );
-                                                                if (
-                                                                    formRef.current
-                                                                ) {
-                                                                    formRef.current.reset();
-                                                                }
+                                                                handleDrawerClose();
                                                             }}
                                                             className="relative rounded-md text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                                                         >
