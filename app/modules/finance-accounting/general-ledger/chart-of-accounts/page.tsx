@@ -28,7 +28,10 @@ type Account = {
     type: string;
     normal_balance: string;
     status: string;
-    [key: string]: unknown;
+    ledger_id: string;
+    parent_id: string | null;
+    level: number;
+    description?: string | null;
 };
 
 export default function ChartOfAccountsPage() {
@@ -82,6 +85,28 @@ export default function ChartOfAccountsPage() {
             level = Number.isNaN(parsedLevel) ? null : parsedLevel;
         }
 
+        const selectedParentId =
+            typeof parentAccount === "string" && parentAccount !== ""
+                ? parentAccount
+                : null;
+
+        let ledgerId: string | null = null;
+        if (selectedParentId) {
+            const parentAccountDetails = accounts.find(
+                (account) => account.id === selectedParentId
+            );
+            ledgerId = parentAccountDetails?.ledger_id ?? null;
+        }
+
+        if (!ledgerId && accounts.length > 0) {
+            ledgerId = accounts[0]?.ledger_id ?? null;
+        }
+
+        if (!ledgerId) {
+            setError("Unable to determine the ledger for the new account.");
+            return;
+        }
+
         const payload = {
             code: typeof code === "string" ? code : "",
             name: typeof name === "string" ? name : "",
@@ -89,11 +114,8 @@ export default function ChartOfAccountsPage() {
                 typeof description === "string" && description.trim() !== ""
                     ? description
                     : null,
-            level,
-            parent_id:
-                typeof parentAccount === "string" && parentAccount !== ""
-                    ? parentAccount
-                    : null,
+            level: level ?? 0,
+            parent_id: selectedParentId,
             type:
                 typeof accountType === "string" && accountType !== ""
                     ? accountType
@@ -101,6 +123,7 @@ export default function ChartOfAccountsPage() {
             normal_balance: normalBalance,
             is_postable: formData.get("is-postable") === "on",
             status: formData.get("is-active") === "on" ? "ACTIVE" : "INACTIVE",
+            ledger_id: ledgerId,
         };
 
         try {
