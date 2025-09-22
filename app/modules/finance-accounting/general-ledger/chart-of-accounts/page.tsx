@@ -53,6 +53,20 @@ export default function ChartOfAccountsPage() {
     const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
+        if (!saveStatus) {
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            setSaveStatus(null);
+        }, 3000);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [saveStatus]);
+
+    useEffect(() => {
         const fetchAccounts = async () => {
             try {
                 const res = await fetch("/api/finance-accounting/accounts");
