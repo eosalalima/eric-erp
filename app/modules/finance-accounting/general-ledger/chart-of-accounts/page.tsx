@@ -74,6 +74,11 @@ export default function ChartOfAccountsPage() {
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
     );
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [pendingDeleteAccount, setPendingDeleteAccount] =
+        useState<Account | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [formValues, setFormValues] = useState<FormValues>(defaultFormValues);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [touchedFields, setTouchedFields] = useState<
@@ -442,6 +447,77 @@ export default function ChartOfAccountsPage() {
         }
     };
 
+    const handleDeleteRequest = (account: Account) => {
+        setPendingDeleteAccount(account);
+        setIsDeleteModalOpen(true);
+        setDeleteError(null);
+    };
+
+    const resetDeleteState = () => {
+        setIsDeleteModalOpen(false);
+        setPendingDeleteAccount(null);
+        setDeleteError(null);
+        setIsDeleting(false);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!pendingDeleteAccount) {
+            return;
+        }
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        try {
+            const response = await fetch(
+                `/api/finance-accounting/accounts/${pendingDeleteAccount.id}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (!response.ok) {
+                let errorMessage = "Failed to delete account.";
+                try {
+                    const data = await response.json();
+                    if (data?.message) {
+                        errorMessage = data.message;
+                    }
+                } catch {
+                    // Ignore parsing errors and use the default message
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            setAccounts((prevAccounts) =>
+                prevAccounts.filter(
+                    (account) => account.id !== pendingDeleteAccount.id
+                )
+            );
+
+            setSaveStatus({
+                type: "success",
+                message: "Account deleted successfully.",
+            });
+
+            resetDeleteState();
+        } catch (error) {
+            console.error(error);
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to delete account.";
+            setDeleteError(message);
+            setSaveStatus({
+                type: "error",
+                message,
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <>
             <SignedIn>
@@ -541,6 +617,7 @@ export default function ChartOfAccountsPage() {
                                                     onEdit={(account) => {
                                                         handleEdit(account.id);
                                                     }}
+                                                    onDelete={handleDeleteRequest}
                                                 />
                                             </div>
                                         </>
@@ -956,6 +1033,55 @@ export default function ChartOfAccountsPage() {
                                     </DialogPanel>
                                 </div>
                             </div>
+                        </div>
+                    </Dialog>
+                    <Dialog
+                        open={isDeleteModalOpen}
+                        onClose={resetDeleteState}
+                        className="relative z-50"
+                    >
+                        <div className="fixed inset-0 bg-gray-500/75" aria-hidden="true" />
+                        <div className="fixed inset-0 flex items-center justify-center p-4">
+                            <DialogPanel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl">
+                                <div className="p-6">
+                                    <DialogTitle className="text-base font-semibold text-gray-900">
+                                        Confirm deletion
+                                    </DialogTitle>
+                                    <p className="mt-4 text-sm text-gray-600">
+                                        Are you sure you want to delete the account
+                                        {" "}
+                                        <span className="font-medium text-gray-900">
+                                            {pendingDeleteAccount
+                                                ? `${pendingDeleteAccount.code} – ${pendingDeleteAccount.name}`
+                                                : "this account"}
+                                        </span>
+                                        ? This action cannot be undone.
+                                    </p>
+                                    {deleteError ? (
+                                        <p className="mt-4 text-sm text-red-600" role="alert">
+                                            {deleteError}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                <div className="flex justify-end gap-3 bg-gray-50 px-6 py-4">
+                                    <button
+                                        type="button"
+                                        className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                                        onClick={resetDeleteState}
+                                        disabled={isDeleting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="rounded px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                        onClick={handleDeleteConfirm}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? "Deleting..." : "Delete"}
+                                    </button>
+                                </div>
+                            </DialogPanel>
                         </div>
                     </Dialog>
                 </div>
