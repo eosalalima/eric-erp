@@ -43,9 +43,10 @@ export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const [saveStatus, setSaveStatus] = useState<
-        { type: "success" | "error"; message: string } | null
-    >(null);
+    const [saveStatus, setSaveStatus] = useState<{
+        type: "success" | "error";
+        message: string;
+    } | null>(null);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
     );
@@ -340,13 +341,14 @@ export default function ChartOfAccountsPage() {
                                         <div
                                             className={`mx-4 mt-4 rounded-md p-4 ${
                                                 saveStatus.type === "success"
-                                                    ? "bg-green-50"
-                                                    : "bg-red-50"
+                                                    ? "bg-green-100"
+                                                    : "bg-red-100"
                                             }`}
                                         >
                                             <div className="flex">
                                                 <div className="flex-shrink-0">
-                                                    {saveStatus.type === "success" ? (
+                                                    {saveStatus.type ===
+                                                    "success" ? (
                                                         <CheckCircleIcon className="size-5 text-green-400" />
                                                     ) : (
                                                         <AlertXCircleIcon className="size-5 text-red-400" />
@@ -355,7 +357,8 @@ export default function ChartOfAccountsPage() {
                                                 <div className="ml-3">
                                                     <p
                                                         className={`text-sm font-medium ${
-                                                            saveStatus.type === "success"
+                                                            saveStatus.type ===
+                                                            "success"
                                                                 ? "text-green-800"
                                                                 : "text-red-800"
                                                         }`}
