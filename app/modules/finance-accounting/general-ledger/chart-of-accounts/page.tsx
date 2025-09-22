@@ -32,7 +32,7 @@ type Account = {
     parent_id: string | null;
     level: number;
     description?: string | null;
-    is_postable: boolean;
+    is_postable?: boolean;
 };
 
 export default function ChartOfAccountsPage() {
@@ -64,77 +64,64 @@ export default function ChartOfAccountsPage() {
             return;
         }
 
+        const form = formRef.current;
+
         if (!selectedAccount) {
-            formRef.current.reset();
+            form.reset();
             return;
         }
 
-        const form = formRef.current;
+        const assignValue = (
+            name: string,
+            value: string | number | null | undefined
+        ) => {
+            const element = form.elements.namedItem(name);
 
-        const codeInput = form.elements.namedItem("code") as
-            | HTMLInputElement
-            | null;
-        if (codeInput) {
-            codeInput.value = selectedAccount.code;
+            if (element instanceof HTMLInputElement) {
+                if (element.type === "checkbox") {
+                    element.checked = Boolean(value);
+                } else {
+                    element.value = value == null ? "" : String(value);
+                }
+            } else if (
+                element instanceof HTMLSelectElement ||
+                element instanceof HTMLTextAreaElement
+            ) {
+                element.value = value == null ? "" : String(value);
+            }
+        };
+
+        assignValue("code", selectedAccount.code);
+        assignValue("name", selectedAccount.name);
+        assignValue("description", selectedAccount.description ?? "");
+        assignValue("level", selectedAccount.level ?? "");
+
+        const parentField = form.elements.namedItem("parent-account");
+        if (parentField instanceof HTMLSelectElement) {
+            parentField.value = selectedAccount.parent_id ?? "";
         }
 
-        const nameInput = form.elements.namedItem("name") as
-            | HTMLInputElement
-            | null;
-        if (nameInput) {
-            nameInput.value = selectedAccount.name;
+        const accountTypeField = form.elements.namedItem("account-type");
+        if (accountTypeField instanceof HTMLSelectElement) {
+            accountTypeField.value = selectedAccount.type;
         }
 
-        const descriptionInput = form.elements.namedItem("description") as
-            | HTMLTextAreaElement
-            | null;
-        if (descriptionInput) {
-            descriptionInput.value = selectedAccount.description ?? "";
-        }
-
-        const levelInput = form.elements.namedItem("level") as
-            | HTMLInputElement
-            | null;
-        if (levelInput) {
-            levelInput.value = String(selectedAccount.level ?? "");
-        }
-
-        const parentSelect = form.elements.namedItem(
-            "parent-account"
-        ) as HTMLSelectElement | null;
-        if (parentSelect) {
-            parentSelect.value = selectedAccount.parent_id ?? "";
-        }
-
-        const accountTypeSelect = form.elements.namedItem(
-            "account-type"
-        ) as HTMLSelectElement | null;
-        if (accountTypeSelect) {
-            accountTypeSelect.value = selectedAccount.type ?? "ASSET";
-        }
-
-        const normalBalanceSelect = form.elements.namedItem(
-            "normal-balance"
-        ) as HTMLSelectElement | null;
-        if (normalBalanceSelect) {
-            normalBalanceSelect.value =
-                selectedAccount.normal_balance === "CREDIT"
+        const normalBalanceField = form.elements.namedItem("normal-balance");
+        if (normalBalanceField instanceof HTMLSelectElement) {
+            normalBalanceField.value =
+                selectedAccount.normal_balance.toUpperCase() === "CREDIT"
                     ? "Credit"
                     : "Debit";
         }
 
-        const isPostableInput = form.elements.namedItem("is-postable") as
-            | HTMLInputElement
-            | null;
-        if (isPostableInput) {
-            isPostableInput.checked = Boolean(selectedAccount.is_postable);
+        const isActiveField = form.elements.namedItem("is-active");
+        if (isActiveField instanceof HTMLInputElement) {
+            isActiveField.checked = selectedAccount.status === "ACTIVE";
         }
 
-        const isActiveInput = form.elements.namedItem("is-active") as
-            | HTMLInputElement
-            | null;
-        if (isActiveInput) {
-            isActiveInput.checked = selectedAccount.status === "ACTIVE";
+        const isPostableField = form.elements.namedItem("is-postable");
+        if (isPostableField instanceof HTMLInputElement) {
+            isPostableField.checked = Boolean(selectedAccount.is_postable);
         }
     }, [selectedAccount]);
 
@@ -266,6 +253,7 @@ export default function ChartOfAccountsPage() {
             }
             formRef.current.reset();
             setOpen(false);
+            setSelectedAccount(null);
         } catch (saveError) {
             console.error(saveError);
             setError(
@@ -288,7 +276,10 @@ export default function ChartOfAccountsPage() {
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
                                 setSelectedAccount(null);
-                                formRef.current?.reset();
+                          
+                                if (formRef.current) {
+                                    formRef.current.reset();
+                                }
                                 setOpen(true);
                             }}
                         >
@@ -329,7 +320,18 @@ export default function ChartOfAccountsPage() {
                                             <div className="flex-1 min-h-0 min-w-full overflow-y-auto overflow-x-auto">
                                                 <ChartOfAccountsTable
                                                     accounts={accounts}
-                                                    onEdit={handleEdit}
+                                                    onEdit={(account) => {
+                                                        const accountDetails =
+                                                            accounts.find(
+                                                                (item) =>
+                                                                    item.id ===
+                                                                    account.id
+                                                            ) ?? null;
+                                                        setSelectedAccount(
+                                                            accountDetails
+                                                        );
+                                                        setOpen(true);
+                                                    }}
                                                 />
                                             </div>
                                         </>
@@ -341,7 +343,15 @@ export default function ChartOfAccountsPage() {
 
                     <Dialog
                         open={open}
-                        onClose={handleClose}
+                        onClose={(value) => {
+                            setOpen(value);
+                            if (!value) {
+                                setSelectedAccount(null);
+                                if (formRef.current) {
+                                    formRef.current.reset();
+                                }
+                            }
+                        }}
                         className="relative z-10"
                     >
                         <div className="fixed inset-0" />
@@ -364,7 +374,13 @@ export default function ChartOfAccountsPage() {
                                                     <div className="ml-3 flex h-7 items-center">
                                                         <button
                                                             type="button"
-                                                            onClick={handleClose}
+                                                            onClick={() => {
+                                                                setOpen(false);
+                                                                setSelectedAccount(null);
+                                                                if (formRef.current) {
+                                                                    formRef.current.reset();
+                                                                }
+                                                            }}
                                                             className="relative rounded-md text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                                                         >
                                                             <span className="absolute -inset-2.5" />
@@ -632,7 +648,13 @@ export default function ChartOfAccountsPage() {
                                                 <button
                                                     type="button"
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                                    onClick={handleClose}
+                                                    onClick={() => {
+                                                        setOpen(false);
+                                                        setSelectedAccount(null);
+                                                        if (formRef.current) {
+                                                            formRef.current.reset();
+                                                        }
+                                                    }}
                                                 >
                                                     Cancel
                                                 </button>
