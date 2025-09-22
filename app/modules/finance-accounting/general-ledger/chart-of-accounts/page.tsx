@@ -3,7 +3,7 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
 import ChartOfAccountsTable from "./ChartOfAccountsTable";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -39,6 +39,30 @@ type Account = {
     is_postable?: boolean;
 };
 
+type FormValues = {
+    code: string;
+    name: string;
+    level: string;
+    accountType: string;
+    normalBalance: string;
+};
+
+const defaultFormValues: FormValues = {
+    code: "",
+    name: "",
+    level: "",
+    accountType: "ASSET",
+    normalBalance: "Debit",
+};
+
+const defaultTouchedFields: Record<keyof FormValues, boolean> = {
+    code: false,
+    name: false,
+    level: false,
+    accountType: false,
+    normalBalance: false,
+};
+
 export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -50,7 +74,91 @@ export default function ChartOfAccountsPage() {
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
     );
+    const [formValues, setFormValues] = useState<FormValues>(defaultFormValues);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [touchedFields, setTouchedFields] = useState<
+        Record<keyof FormValues, boolean>
+    >(defaultTouchedFields);
     const formRef = useRef<HTMLFormElement>(null);
+
+    const validateRequiredFields = (values: FormValues) => {
+        const errors: Record<string, string> = {};
+
+        if (!values.code.trim()) {
+            errors.code = "Code is required.";
+        }
+
+        if (!values.name.trim()) {
+            errors.name = "Account name is required.";
+        }
+
+        if (!values.level.trim()) {
+            errors.level = "Level is required.";
+        } else if (Number.isNaN(Number(values.level))) {
+            errors.level = "Level must be a valid number.";
+        }
+
+        if (!values.accountType) {
+            errors.accountType = "Account type is required.";
+        }
+
+        if (!values.normalBalance) {
+            errors.normalBalance = "Normal balance is required.";
+        }
+
+        return {
+            errors,
+            isValid: Object.keys(errors).length === 0,
+        };
+    };
+
+    const handleFieldChange = (
+        field: keyof FormValues
+    ) =>
+        (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+            const value = event.target.value;
+            const updatedValues = { ...formValues, [field]: value } as FormValues;
+            const updatedTouched = {
+                ...touchedFields,
+                [field]: true,
+            } as Record<keyof FormValues, boolean>;
+
+            setFormValues(updatedValues);
+            setTouchedFields(updatedTouched);
+
+            const { errors } = validateRequiredFields(updatedValues);
+            const filteredErrors = Object.fromEntries(
+                Object.entries(errors).filter(([key]) =>
+                    updatedTouched[key as keyof FormValues]
+                )
+            ) as Record<string, string>;
+
+            setFormErrors(filteredErrors);
+        };
+
+    const handleFieldBlur = (field: keyof FormValues) => () => {
+        if (touchedFields[field]) {
+            return;
+        }
+
+        const updatedTouched = {
+            ...touchedFields,
+            [field]: true,
+        } as Record<keyof FormValues, boolean>;
+
+        setTouchedFields(updatedTouched);
+
+        const { errors } = validateRequiredFields(formValues);
+        const filteredErrors = Object.fromEntries(
+            Object.entries(errors).filter(([key]) =>
+                updatedTouched[key as keyof FormValues]
+            )
+        ) as Record<string, string>;
+
+        setFormErrors(filteredErrors);
+    };
+
+    const { isValid: isFormValid } = validateRequiredFields(formValues);
 
     useEffect(() => {
         if (!saveStatus) {
@@ -84,6 +192,34 @@ export default function ChartOfAccountsPage() {
     }, []);
 
     useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        if (selectedAccount) {
+            setFormValues({
+                code: selectedAccount.code ?? "",
+                name: selectedAccount.name ?? "",
+                level:
+                    selectedAccount.level === undefined ||
+                    selectedAccount.level === null
+                        ? ""
+                        : String(selectedAccount.level),
+                accountType: selectedAccount.type ?? "ASSET",
+                normalBalance:
+                    selectedAccount.normal_balance.toUpperCase() === "CREDIT"
+                        ? "Credit"
+                        : "Debit",
+            });
+        } else {
+            setFormValues(defaultFormValues);
+        }
+
+        setFormErrors({});
+        setTouchedFields({ ...defaultTouchedFields });
+    }, [open, selectedAccount]);
+
+    useEffect(() => {
         if (!open || !formRef.current) {
             return;
         }
@@ -115,27 +251,11 @@ export default function ChartOfAccountsPage() {
             }
         };
 
-        assignValue("code", selectedAccount.code);
-        assignValue("name", selectedAccount.name);
         assignValue("description", selectedAccount.description ?? "");
-        assignValue("level", selectedAccount.level ?? "");
 
         const parentField = form.elements.namedItem("parent-account");
         if (parentField instanceof HTMLSelectElement) {
             parentField.value = selectedAccount.parent_id ?? "";
-        }
-
-        const accountTypeField = form.elements.namedItem("account-type");
-        if (accountTypeField instanceof HTMLSelectElement) {
-            accountTypeField.value = selectedAccount.type;
-        }
-
-        const normalBalanceField = form.elements.namedItem("normal-balance");
-        if (normalBalanceField instanceof HTMLSelectElement) {
-            normalBalanceField.value =
-                selectedAccount.normal_balance.toUpperCase() === "CREDIT"
-                    ? "Credit"
-                    : "Debit";
         }
 
         const isActiveField = form.elements.namedItem("is-active");
@@ -164,11 +284,16 @@ export default function ChartOfAccountsPage() {
         setSaveStatus(null);
         setOpen(true);
         setSelectedAccount(accountToEdit);
+        setFormErrors({});
+        setTouchedFields({ ...defaultTouchedFields });
     };
 
     const handleDrawerClose = (options?: { clearSaveStatus?: boolean }) => {
         setOpen(false);
         setSelectedAccount(null);
+        setFormValues(defaultFormValues);
+        setFormErrors({});
+        setTouchedFields({ ...defaultTouchedFields });
         if (formRef.current) {
             formRef.current.reset();
         }
@@ -183,26 +308,36 @@ export default function ChartOfAccountsPage() {
         }
 
         setSaveStatus(null);
+
+        const { errors, isValid } = validateRequiredFields(formValues);
+
+        if (!isValid) {
+            setTouchedFields({
+                code: true,
+                name: true,
+                level: true,
+                accountType: true,
+                normalBalance: true,
+            });
+            setFormErrors(errors);
+            setSaveStatus({
+                type: "error",
+                message: "Please correct the errors before saving.",
+            });
+            return;
+        }
+
+        setFormErrors({});
+
         const formData = new FormData(formRef.current);
 
-        const code = formData.get("code");
-        const name = formData.get("name");
         const description = formData.get("description");
-        const levelValue = formData.get("level");
         const parentAccount = formData.get("parent-account");
-        const accountType = formData.get("account-type");
-        const normalBalanceSelection = formData.get("normal-balance");
         const normalBalance =
-            typeof normalBalanceSelection === "string" &&
-            normalBalanceSelection.toLowerCase() === "credit"
+            formValues.normalBalance.toLowerCase() === "credit"
                 ? "CREDIT"
                 : "DEBIT";
-
-        let level: number | null = null;
-        if (typeof levelValue === "string" && levelValue !== "") {
-            const parsedLevel = Number(levelValue);
-            level = Number.isNaN(parsedLevel) ? null : parsedLevel;
-        }
+        const parsedLevel = Number(formValues.level);
 
         const selectedParentId =
             typeof parentAccount === "string" && parentAccount !== ""
@@ -230,17 +365,17 @@ export default function ChartOfAccountsPage() {
         }
 
         const payload = {
-            code: typeof code === "string" ? code : "",
-            name: typeof name === "string" ? name : "",
+            code: formValues.code.trim(),
+            name: formValues.name.trim(),
             description:
                 typeof description === "string" && description.trim() !== ""
                     ? description
                     : null,
-            level: level ?? 0,
+            level: parsedLevel,
             parent_id: selectedParentId,
             type:
-                typeof accountType === "string" && accountType !== ""
-                    ? accountType
+                formValues.accountType && formValues.accountType !== ""
+                    ? formValues.accountType
                     : "ASSET",
             normal_balance: normalBalance,
             is_postable: formData.get("is-postable") === "on",
@@ -326,6 +461,9 @@ export default function ChartOfAccountsPage() {
                                 if (formRef.current) {
                                     formRef.current.reset();
                                 }
+                                setFormValues(defaultFormValues);
+                                setFormErrors({});
+                                setTouchedFields({ ...defaultTouchedFields });
                                 setOpen(true);
                             }}
                         >
@@ -473,57 +611,79 @@ export default function ChartOfAccountsPage() {
                                                 <form ref={formRef}>
                                                     <div className="sm:col-span-4">
                                                         <label
-                                                            htmlFor="username"
+                                                            htmlFor="code"
                                                             className="block text-sm/6 font-medium text-gray-900"
                                                         >
                                                             Code
                                                         </label>
                                                         <div className="mt-2">
-                                                            <div className="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                                            <div
+                                                                className={`flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    formErrors.code
+                                                                        ? "outline-red-500"
+                                                                        : "outline-gray-300"
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     id="code"
                                                                     name="code"
                                                                     type="text"
                                                                     placeholder=""
-                                                                    defaultValue={
-                                                                        selectedAccount
-                                                                            ? selectedAccount.code
-                                                                            : ""
-                                                                    }
+                                                                    required
+                                                                    value={formValues.code}
+                                                                    onChange={handleFieldChange("code")}
+                                                                    onBlur={handleFieldBlur("code")}
+                                                                    aria-invalid={Boolean(formErrors.code)}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
+                                                            {formErrors.code ? (
+                                                                <p className="mt-2 text-sm text-red-600" role="alert">
+                                                                    {formErrors.code}
+                                                                </p>
+                                                            ) : null}
                                                         </div>
                                                     </div>
 
                                                     <div className="sm:col-span-4 mt-4">
                                                         <label
-                                                            htmlFor="username"
+                                                            htmlFor="name"
                                                             className="block text-sm/6 font-medium text-gray-900"
                                                         >
                                                             Account Name
                                                         </label>
                                                         <div className="mt-2">
-                                                            <div className="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                                            <div
+                                                                className={`flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    formErrors.name
+                                                                        ? "outline-red-500"
+                                                                        : "outline-gray-300"
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     id="name"
                                                                     name="name"
                                                                     type="text"
                                                                     placeholder=""
-                                                                    defaultValue={
-                                                                        selectedAccount
-                                                                            ? selectedAccount.name
-                                                                            : ""
-                                                                    }
+                                                                    required
+                                                                    value={formValues.name}
+                                                                    onChange={handleFieldChange("name")}
+                                                                    onBlur={handleFieldBlur("name")}
+                                                                    aria-invalid={Boolean(formErrors.name)}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
+                                                            {formErrors.name ? (
+                                                                <p className="mt-2 text-sm text-red-600" role="alert">
+                                                                    {formErrors.name}
+                                                                </p>
+                                                            ) : null}
                                                         </div>
                                                     </div>
 
                                                     <div className="sm:col-span-4 mt-4">
                                                         <label
-                                                            htmlFor="username"
+                                                            htmlFor="description"
                                                             className="block text-sm/6 font-medium text-gray-900"
                                                         >
                                                             Description
@@ -549,26 +709,37 @@ export default function ChartOfAccountsPage() {
 
                                                     <div className="sm:col-span-4 mt-4">
                                                         <label
-                                                            htmlFor="username"
+                                                            htmlFor="level"
                                                             className="block text-sm/6 font-medium text-gray-900"
                                                         >
                                                             Level
                                                         </label>
                                                         <div className="mt-2">
-                                                            <div className="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                                            <div
+                                                                className={`flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    formErrors.level
+                                                                        ? "outline-red-500"
+                                                                        : "outline-gray-300"
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     id="level"
                                                                     name="level"
                                                                     type="number"
                                                                     placeholder=""
-                                                                    defaultValue={
-                                                                        selectedAccount
-                                                                            ? selectedAccount.level
-                                                                            : ""
-                                                                    }
+                                                                    required
+                                                                    value={formValues.level}
+                                                                    onChange={handleFieldChange("level")}
+                                                                    onBlur={handleFieldBlur("level")}
+                                                                    aria-invalid={Boolean(formErrors.level)}
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
+                                                            {formErrors.level ? (
+                                                                <p className="mt-2 text-sm text-red-600" role="alert">
+                                                                    {formErrors.level}
+                                                                </p>
+                                                            ) : null}
                                                         </div>
                                                     </div>
 
@@ -637,38 +808,34 @@ export default function ChartOfAccountsPage() {
                                                                 id="account-type"
                                                                 name="account-type"
                                                                 autoComplete="account-type"
-                                                                defaultValue={
-                                                                    selectedAccount
-                                                                        ? selectedAccount.type ??
-                                                                          ""
-                                                                        : ""
-                                                                }
-                                                                className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                                                required
+                                                                value={formValues.accountType}
+                                                                onChange={handleFieldChange("accountType")}
+                                                                onBlur={handleFieldBlur("accountType")}
+                                                                aria-invalid={Boolean(formErrors.accountType)}
+                                                                className={`col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
+                                                                    formErrors.accountType
+                                                                        ? "outline-red-500"
+                                                                        : "outline-gray-300"
+                                                                }`}
                                                             >
-                                                                <option>
-                                                                    ASSET
-                                                                </option>
-                                                                <option>
-                                                                    LIABILITY
-                                                                </option>
-                                                                <option>
-                                                                    EQUITY
-                                                                </option>
-                                                                <option>
-                                                                    REVENUE
-                                                                </option>
-                                                                <option>
-                                                                    EXPENSE
-                                                                </option>
-                                                                <option>
-                                                                    OFF_BALANCE
-                                                                </option>
+                                                                <option value="ASSET">Asset</option>
+                                                                <option value="LIABILITY">Liability</option>
+                                                                <option value="EQUITY">Equity</option>
+                                                                <option value="REVENUE">Revenue</option>
+                                                                <option value="EXPENSE">Expense</option>
+                                                                <option value="OFF_BALANCE">Off Balance</option>
                                                             </select>
                                                             <ChevronDownIcon
                                                                 aria-hidden="true"
                                                                 className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
                                                             />
                                                         </div>
+                                                        {formErrors.accountType ? (
+                                                            <p className="mt-2 text-sm text-red-600" role="alert">
+                                                                {formErrors.accountType}
+                                                            </p>
+                                                        ) : null}
                                                     </div>
 
                                                     <div className="sm:col-span-3 mt-4">
@@ -683,26 +850,30 @@ export default function ChartOfAccountsPage() {
                                                                 id="normal-balance"
                                                                 name="normal-balance"
                                                                 autoComplete="normal-balance"
-                                                                defaultValue={
-                                                                    selectedAccount
-                                                                        ? selectedAccount.normal_balance ??
-                                                                          ""
-                                                                        : ""
-                                                                }
-                                                                className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                                                required
+                                                                value={formValues.normalBalance}
+                                                                onChange={handleFieldChange("normalBalance")}
+                                                                onBlur={handleFieldBlur("normalBalance")}
+                                                                aria-invalid={Boolean(formErrors.normalBalance)}
+                                                                className={`col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
+                                                                    formErrors.normalBalance
+                                                                        ? "outline-red-500"
+                                                                        : "outline-gray-300"
+                                                                }`}
                                                             >
-                                                                <option value="Debit">
-                                                                    Debit
-                                                                </option>
-                                                                <option value="Credit">
-                                                                    Credit
-                                                                </option>
+                                                                <option value="Debit">Debit</option>
+                                                                <option value="Credit">Credit</option>
                                                             </select>
                                                             <ChevronDownIcon
                                                                 aria-hidden="true"
                                                                 className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
                                                             />
                                                         </div>
+                                                        {formErrors.normalBalance ? (
+                                                            <p className="mt-2 text-sm text-red-600" role="alert">
+                                                                {formErrors.normalBalance}
+                                                            </p>
+                                                        ) : null}
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -765,21 +936,18 @@ export default function ChartOfAccountsPage() {
                                                     type="button"
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                                                     onClick={() => {
-                                                        setOpen(false);
-                                                        setSelectedAccount(
-                                                            null
-                                                        );
-                                                        if (formRef.current) {
-                                                            formRef.current.reset();
-                                                        }
+                                                        handleDrawerClose({
+                                                            clearSaveStatus: false,
+                                                        });
                                                     }}
                                                 >
                                                     Cancel
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="rounded px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="rounded px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                                                     onClick={handleSave}
+                                                    disabled={!isFormValid}
                                                 >
                                                     Save
                                                 </button>
