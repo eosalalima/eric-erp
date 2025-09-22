@@ -60,7 +60,7 @@ export default function ChartOfAccountsPage() {
     }, []);
 
     useEffect(() => {
-        if (!formRef.current) {
+        if (!open || !formRef.current) {
             return;
         }
 
@@ -123,15 +123,9 @@ export default function ChartOfAccountsPage() {
         if (isPostableField instanceof HTMLInputElement) {
             isPostableField.checked = Boolean(selectedAccount.is_postable);
         }
-    }, [selectedAccount]);
+    }, [selectedAccount, open]);
 
     const isLoadingAccounts = !error && accounts.length === 0;
-
-    const handleClose = () => {
-        setOpen(false);
-        setSelectedAccount(null);
-        formRef.current?.reset();
-    };
 
     const handleEdit = (accountId: string) => {
         const accountToEdit = accounts.find((account) => account.id === accountId);
@@ -139,8 +133,8 @@ export default function ChartOfAccountsPage() {
             return;
         }
 
-        setSelectedAccount(accountToEdit);
         setOpen(true);
+        setSelectedAccount(accountToEdit);
     };
 
     const handleSave = async () => {
@@ -321,16 +315,7 @@ export default function ChartOfAccountsPage() {
                                                 <ChartOfAccountsTable
                                                     accounts={accounts}
                                                     onEdit={(account) => {
-                                                        const accountDetails =
-                                                            accounts.find(
-                                                                (item) =>
-                                                                    item.id ===
-                                                                    account.id
-                                                            ) ?? null;
-                                                        setSelectedAccount(
-                                                            accountDetails
-                                                        );
-                                                        setOpen(true);
+                                                        handleEdit(account.id);
                                                     }}
                                                 />
                                             </div>
