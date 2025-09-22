@@ -32,12 +32,14 @@ type Account = {
     parent_id: string | null;
     level: number;
     description?: string | null;
+    is_postable?: boolean;
 };
 
 export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
@@ -56,6 +58,72 @@ export default function ChartOfAccountsPage() {
         };
         fetchAccounts();
     }, []);
+
+    useEffect(() => {
+        if (!formRef.current) {
+            return;
+        }
+
+        const form = formRef.current;
+
+        if (!selectedAccount) {
+            form.reset();
+            return;
+        }
+
+        const assignValue = (
+            name: string,
+            value: string | number | null | undefined
+        ) => {
+            const element = form.elements.namedItem(name);
+
+            if (element instanceof HTMLInputElement) {
+                if (element.type === "checkbox") {
+                    element.checked = Boolean(value);
+                } else {
+                    element.value = value == null ? "" : String(value);
+                }
+            } else if (
+                element instanceof HTMLSelectElement ||
+                element instanceof HTMLTextAreaElement
+            ) {
+                element.value = value == null ? "" : String(value);
+            }
+        };
+
+        assignValue("code", selectedAccount.code);
+        assignValue("name", selectedAccount.name);
+        assignValue("description", selectedAccount.description ?? "");
+        assignValue("level", selectedAccount.level ?? "");
+
+        const parentField = form.elements.namedItem("parent-account");
+        if (parentField instanceof HTMLSelectElement) {
+            parentField.value = selectedAccount.parent_id ?? "";
+        }
+
+        const accountTypeField = form.elements.namedItem("account-type");
+        if (accountTypeField instanceof HTMLSelectElement) {
+            accountTypeField.value = selectedAccount.type;
+        }
+
+        const normalBalanceField = form.elements.namedItem("normal-balance");
+        if (normalBalanceField instanceof HTMLSelectElement) {
+            normalBalanceField.value =
+                selectedAccount.normal_balance.toUpperCase() === "CREDIT"
+                    ? "Credit"
+                    : "Debit";
+        }
+
+        const isActiveField = form.elements.namedItem("is-active");
+        if (isActiveField instanceof HTMLInputElement) {
+            isActiveField.checked = selectedAccount.status === "ACTIVE";
+        }
+
+        const isPostableField = form.elements.namedItem("is-postable");
+        if (isPostableField instanceof HTMLInputElement) {
+            isPostableField.checked = Boolean(selectedAccount.is_postable);
+        }
+    }, [selectedAccount]);
 
     const isLoadingAccounts = !error && accounts.length === 0;
 
@@ -144,6 +212,7 @@ export default function ChartOfAccountsPage() {
             setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             formRef.current.reset();
             setOpen(false);
+            setSelectedAccount(null);
         } catch (saveError) {
             console.error(saveError);
             setError(
@@ -164,7 +233,13 @@ export default function ChartOfAccountsPage() {
                         <button
                             type="button"
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            onClick={() => setOpen(true)}
+                            onClick={() => {
+                                setSelectedAccount(null);
+                                if (formRef.current) {
+                                    formRef.current.reset();
+                                }
+                                setOpen(true);
+                            }}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -203,6 +278,18 @@ export default function ChartOfAccountsPage() {
                                             <div className="flex-1 min-h-0 min-w-full overflow-y-auto overflow-x-auto">
                                                 <ChartOfAccountsTable
                                                     accounts={accounts}
+                                                    onEdit={(account) => {
+                                                        const accountDetails =
+                                                            accounts.find(
+                                                                (item) =>
+                                                                    item.id ===
+                                                                    account.id
+                                                            ) ?? null;
+                                                        setSelectedAccount(
+                                                            accountDetails
+                                                        );
+                                                        setOpen(true);
+                                                    }}
                                                 />
                                             </div>
                                         </>
@@ -214,7 +301,15 @@ export default function ChartOfAccountsPage() {
 
                     <Dialog
                         open={open}
-                        onClose={setOpen}
+                        onClose={(value) => {
+                            setOpen(value);
+                            if (!value) {
+                                setSelectedAccount(null);
+                                if (formRef.current) {
+                                    formRef.current.reset();
+                                }
+                            }
+                        }}
                         className="relative z-10"
                     >
                         <div className="fixed inset-0" />
@@ -235,9 +330,13 @@ export default function ChartOfAccountsPage() {
                                                     <div className="ml-3 flex h-7 items-center">
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                setOpen(false)
-                                                            }
+                                                            onClick={() => {
+                                                                setOpen(false);
+                                                                setSelectedAccount(null);
+                                                                if (formRef.current) {
+                                                                    formRef.current.reset();
+                                                                }
+                                                            }}
                                                             className="relative rounded-md text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                                                         >
                                                             <span className="absolute -inset-2.5" />
@@ -505,9 +604,13 @@ export default function ChartOfAccountsPage() {
                                                 <button
                                                     type="button"
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                                    onClick={() =>
-                                                        setOpen(false)
-                                                    }
+                                                    onClick={() => {
+                                                        setOpen(false);
+                                                        setSelectedAccount(null);
+                                                        if (formRef.current) {
+                                                            formRef.current.reset();
+                                                        }
+                                                    }}
                                                 >
                                                     Cancel
                                                 </button>
