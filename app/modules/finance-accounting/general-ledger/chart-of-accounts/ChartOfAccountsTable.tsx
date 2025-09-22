@@ -224,6 +224,26 @@ export default function ChartOfAccountsTable({
                                             />
                                         </svg>
                                     </button>
+                                    <button
+                                        type="button"
+                                        className="ml-3 text-red-600 hover:text-red-900"
+                                        aria-label="Delete"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth={1.5}
+                                            stroke="currentColor"
+                                            className="size-6"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M6 7.5V19.125A2.625 2.625 0 0 0 8.625 21.75h6.75A2.625 2.625 0 0 0 18 19.125V7.5M4.5 7.5h15m-10.125 0V5.625A1.125 1.125 0 0 1 10.5 4.5h3a1.125 1.125 0 0 1 1.125 1.125V7.5"
+                                            />
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                         ))}
