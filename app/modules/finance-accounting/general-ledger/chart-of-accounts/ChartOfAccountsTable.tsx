@@ -22,6 +22,7 @@ type SortConfig = {
 type ChartOfAccountsTableProps = {
     accounts: Account[];
     onEdit: (account: Account) => void;
+    onDelete: (account: Account) => void;
 };
 
 const directionLabels: Record<SortDirection, string> = {
@@ -63,6 +64,7 @@ const SortIndicator = ({
 export default function ChartOfAccountsTable({
     accounts,
     onEdit,
+    onDelete,
 }: ChartOfAccountsTableProps) {
     const [sortConfig, setSortConfig] = useState<SortConfig>({
         key: "code",
@@ -231,6 +233,7 @@ export default function ChartOfAccountsTable({
                                         type="button"
                                         className="ml-3 text-red-600 hover:text-red-900"
                                         aria-label="Delete"
+                                        onClick={() => onDelete(account)}
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
