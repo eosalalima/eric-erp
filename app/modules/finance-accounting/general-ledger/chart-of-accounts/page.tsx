@@ -39,7 +39,9 @@ export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
+        null
+    );
     const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
@@ -128,10 +130,14 @@ export default function ChartOfAccountsPage() {
     const isLoadingAccounts = !error && accounts.length === 0;
 
     const handleEdit = (accountId: string) => {
-        const accountToEdit = accounts.find((account) => account.id === accountId);
+        const accountToEdit = accounts.find(
+            (account) => account.id === accountId
+        );
         if (!accountToEdit) {
             return;
         }
+
+        console.log("Editing account:", accountToEdit);
 
         setOpen(true);
         setSelectedAccount(accountToEdit);
@@ -225,18 +231,23 @@ export default function ChartOfAccountsPage() {
                 const updatedAccount = (await response.json()) as Account;
                 setAccounts((prevAccounts) =>
                     prevAccounts.map((account) =>
-                        account.id === updatedAccount.id ? updatedAccount : account
+                        account.id === updatedAccount.id
+                            ? updatedAccount
+                            : account
                     )
                 );
                 setSelectedAccount(null);
             } else {
-                const response = await fetch("/api/finance-accounting/accounts", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                });
+                const response = await fetch(
+                    "/api/finance-accounting/accounts",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                    }
+                );
 
                 if (!response.ok) {
                     throw new Error("Network response was not ok");
@@ -270,7 +281,7 @@ export default function ChartOfAccountsPage() {
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
                                 setSelectedAccount(null);
-                          
+
                                 if (formRef.current) {
                                     formRef.current.reset();
                                 }
@@ -361,8 +372,12 @@ export default function ChartOfAccountsPage() {
                                                             type="button"
                                                             onClick={() => {
                                                                 setOpen(false);
-                                                                setSelectedAccount(null);
-                                                                if (formRef.current) {
+                                                                setSelectedAccount(
+                                                                    null
+                                                                );
+                                                                if (
+                                                                    formRef.current
+                                                                ) {
                                                                     formRef.current.reset();
                                                                 }
                                                             }}
@@ -406,6 +421,11 @@ export default function ChartOfAccountsPage() {
                                                                     name="code"
                                                                     type="text"
                                                                     placeholder=""
+                                                                    defaultValue={
+                                                                        selectedAccount
+                                                                            ? selectedAccount.code
+                                                                            : ""
+                                                                    }
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
@@ -426,6 +446,11 @@ export default function ChartOfAccountsPage() {
                                                                     name="name"
                                                                     type="text"
                                                                     placeholder=""
+                                                                    defaultValue={
+                                                                        selectedAccount
+                                                                            ? selectedAccount.name
+                                                                            : ""
+                                                                    }
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
@@ -446,6 +471,12 @@ export default function ChartOfAccountsPage() {
                                                                     name="description"
                                                                     rows={4}
                                                                     placeholder=""
+                                                                    defaultValue={
+                                                                        selectedAccount
+                                                                            ? selectedAccount.description ??
+                                                                              ""
+                                                                            : ""
+                                                                    }
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
@@ -466,6 +497,11 @@ export default function ChartOfAccountsPage() {
                                                                     name="level"
                                                                     type="number"
                                                                     placeholder=""
+                                                                    defaultValue={
+                                                                        selectedAccount
+                                                                            ? selectedAccount.level
+                                                                            : ""
+                                                                    }
                                                                     className="block min-w-0 grow bg-white py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-0 sm:text-sm/6"
                                                                 />
                                                             </div>
@@ -484,7 +520,12 @@ export default function ChartOfAccountsPage() {
                                                                 id="parent-account"
                                                                 name="parent-account"
                                                                 autoComplete="parent-account"
-                                                                defaultValue=""
+                                                                defaultValue={
+                                                                    selectedAccount
+                                                                        ? selectedAccount.parent_id ??
+                                                                          ""
+                                                                        : ""
+                                                                }
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
                                                                 <option
@@ -532,6 +573,12 @@ export default function ChartOfAccountsPage() {
                                                                 id="account-type"
                                                                 name="account-type"
                                                                 autoComplete="account-type"
+                                                                defaultValue={
+                                                                    selectedAccount
+                                                                        ? selectedAccount.type ??
+                                                                          ""
+                                                                        : ""
+                                                                }
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
                                                                 <option>
@@ -572,6 +619,12 @@ export default function ChartOfAccountsPage() {
                                                                 id="normal-balance"
                                                                 name="normal-balance"
                                                                 autoComplete="normal-balance"
+                                                                defaultValue={
+                                                                    selectedAccount
+                                                                        ? selectedAccount.normal_balance ??
+                                                                          ""
+                                                                        : ""
+                                                                }
                                                                 className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                                             >
                                                                 <option value="Debit">
@@ -601,6 +654,13 @@ export default function ChartOfAccountsPage() {
                                                                 <input
                                                                     name="is-postable"
                                                                     type="checkbox"
+                                                                    defaultChecked={
+                                                                        selectedAccount
+                                                                            ? Boolean(
+                                                                                  selectedAccount.is_postable
+                                                                              )
+                                                                            : false
+                                                                    }
                                                                     aria-label="Use setting"
                                                                     className="absolute inset-0 appearance-none focus:outline-none"
                                                                 />
@@ -618,6 +678,13 @@ export default function ChartOfAccountsPage() {
                                                                 <input
                                                                     name="is-active"
                                                                     type="checkbox"
+                                                                    defaultChecked={
+                                                                        selectedAccount
+                                                                            ? Boolean(
+                                                                                  selectedAccount.status
+                                                                              )
+                                                                            : false
+                                                                    }
                                                                     aria-label="Use setting"
                                                                     className="absolute inset-0 appearance-none focus:outline-none"
                                                                 />
@@ -635,7 +702,9 @@ export default function ChartOfAccountsPage() {
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                                                     onClick={() => {
                                                         setOpen(false);
-                                                        setSelectedAccount(null);
+                                                        setSelectedAccount(
+                                                            null
+                                                        );
                                                         if (formRef.current) {
                                                             formRef.current.reset();
                                                         }
