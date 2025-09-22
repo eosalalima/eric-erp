@@ -127,6 +127,22 @@ export default function ChartOfAccountsPage() {
 
     const isLoadingAccounts = !error && accounts.length === 0;
 
+    const handleClose = () => {
+        setOpen(false);
+        setSelectedAccount(null);
+        formRef.current?.reset();
+    };
+
+    const handleEdit = (accountId: string) => {
+        const accountToEdit = accounts.find((account) => account.id === accountId);
+        if (!accountToEdit) {
+            return;
+        }
+
+        setSelectedAccount(accountToEdit);
+        setOpen(true);
+    };
+
     const handleSave = async () => {
         if (!formRef.current) {
             return;
@@ -158,7 +174,7 @@ export default function ChartOfAccountsPage() {
                 ? parentAccount
                 : null;
 
-        let ledgerId: string | null = null;
+        let ledgerId: string | null = selectedAccount?.ledger_id ?? null;
         if (selectedParentId) {
             const parentAccountDetails = accounts.find(
                 (account) => account.id === selectedParentId
@@ -196,20 +212,45 @@ export default function ChartOfAccountsPage() {
 
         try {
             setError(null);
-            const response = await fetch("/api/finance-accounting/accounts", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
+            if (selectedAccount) {
+                const response = await fetch(
+                    `/api/finance-accounting/accounts/${selectedAccount.id}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                    }
+                );
 
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                const updatedAccount = (await response.json()) as Account;
+                setAccounts((prevAccounts) =>
+                    prevAccounts.map((account) =>
+                        account.id === updatedAccount.id ? updatedAccount : account
+                    )
+                );
+                setSelectedAccount(null);
+            } else {
+                const response = await fetch("/api/finance-accounting/accounts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                const newAccount = (await response.json()) as Account;
+                setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             }
-
-            const newAccount = (await response.json()) as Account;
-            setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             formRef.current.reset();
             setOpen(false);
             setSelectedAccount(null);
@@ -235,6 +276,7 @@ export default function ChartOfAccountsPage() {
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
                                 setSelectedAccount(null);
+                          
                                 if (formRef.current) {
                                     formRef.current.reset();
                                 }
@@ -325,7 +367,9 @@ export default function ChartOfAccountsPage() {
                                             <div className="bg-indigo-700 px-4 py-6 sm:px-6">
                                                 <div className="flex items-center justify-between">
                                                     <DialogTitle className="text-base font-semibold text-white">
-                                                        Add Chart of Account
+                                                        {selectedAccount
+                                                            ? "Edit Chart of Account"
+                                                            : "Add Chart of Account"}
                                                     </DialogTitle>
                                                     <div className="ml-3 flex h-7 items-center">
                                                         <button

@@ -386,15 +386,6 @@ export default function Sidebar({ navigation }: SidebarProps) {
                                                     >
                                                         {item.subnavigation?.map(
                                                             (child) => {
-                                                                const ChildIcon =
-                                                                    child.icon
-                                                                        ? iconMap[
-                                                                              child
-                                                                                  .icon
-                                                                          ]
-                                                                        : iconMap[
-                                                                              fallbackIconKey
-                                                                          ];
                                                                 const childIsActive =
                                                                     child.current ||
                                                                     pathname ===
