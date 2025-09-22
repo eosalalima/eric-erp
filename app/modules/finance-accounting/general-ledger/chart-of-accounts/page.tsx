@@ -338,33 +338,35 @@ export default function ChartOfAccountsPage() {
                             <div className="flex h-full min-w-full flex-col py-2 align-middle sm:px-6 lg:px-8">
                                 <div className="flex flex-1 min-h-0 flex-col overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
                                     {saveStatus ? (
-                                        <div
-                                            className={`mx-4 mt-4 rounded-md p-4 ${
-                                                saveStatus.type === "success"
-                                                    ? "bg-green-100"
-                                                    : "bg-red-100"
-                                            }`}
-                                        >
-                                            <div className="flex">
-                                                <div className="flex-shrink-0">
-                                                    {saveStatus.type ===
-                                                    "success" ? (
-                                                        <CheckCircleIcon className="size-5 text-green-400" />
-                                                    ) : (
-                                                        <AlertXCircleIcon className="size-5 text-red-400" />
-                                                    )}
-                                                </div>
-                                                <div className="ml-3">
-                                                    <p
-                                                        className={`text-sm font-medium ${
-                                                            saveStatus.type ===
-                                                            "success"
-                                                                ? "text-green-800"
-                                                                : "text-red-800"
-                                                        }`}
-                                                    >
-                                                        {saveStatus.message}
-                                                    </p>
+                                        <div className="fixed top-4 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
+                                            <div
+                                                className={`rounded-md p-4 ${
+                                                    saveStatus.type === "success"
+                                                        ? "bg-green-100"
+                                                        : "bg-red-100"
+                                                }`}
+                                            >
+                                                <div className="flex">
+                                                    <div className="flex-shrink-0">
+                                                        {saveStatus.type ===
+                                                        "success" ? (
+                                                            <CheckCircleIcon className="size-5 text-green-400" />
+                                                        ) : (
+                                                            <AlertXCircleIcon className="size-5 text-red-400" />
+                                                        )}
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <p
+                                                            className={`text-sm font-medium ${
+                                                                saveStatus.type ===
+                                                                "success"
+                                                                    ? "text-green-800"
+                                                                    : "text-red-800"
+                                                            }`}
+                                                        >
+                                                            {saveStatus.message}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
