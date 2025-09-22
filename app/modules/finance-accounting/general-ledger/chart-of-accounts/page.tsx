@@ -32,12 +32,14 @@ type Account = {
     parent_id: string | null;
     level: number;
     description?: string | null;
+    is_postable: boolean;
 };
 
 export default function ChartOfAccountsPage() {
     const [open, setOpen] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
@@ -57,7 +59,102 @@ export default function ChartOfAccountsPage() {
         fetchAccounts();
     }, []);
 
+    useEffect(() => {
+        if (!formRef.current) {
+            return;
+        }
+
+        if (!selectedAccount) {
+            formRef.current.reset();
+            return;
+        }
+
+        const form = formRef.current;
+
+        const codeInput = form.elements.namedItem("code") as
+            | HTMLInputElement
+            | null;
+        if (codeInput) {
+            codeInput.value = selectedAccount.code;
+        }
+
+        const nameInput = form.elements.namedItem("name") as
+            | HTMLInputElement
+            | null;
+        if (nameInput) {
+            nameInput.value = selectedAccount.name;
+        }
+
+        const descriptionInput = form.elements.namedItem("description") as
+            | HTMLTextAreaElement
+            | null;
+        if (descriptionInput) {
+            descriptionInput.value = selectedAccount.description ?? "";
+        }
+
+        const levelInput = form.elements.namedItem("level") as
+            | HTMLInputElement
+            | null;
+        if (levelInput) {
+            levelInput.value = String(selectedAccount.level ?? "");
+        }
+
+        const parentSelect = form.elements.namedItem(
+            "parent-account"
+        ) as HTMLSelectElement | null;
+        if (parentSelect) {
+            parentSelect.value = selectedAccount.parent_id ?? "";
+        }
+
+        const accountTypeSelect = form.elements.namedItem(
+            "account-type"
+        ) as HTMLSelectElement | null;
+        if (accountTypeSelect) {
+            accountTypeSelect.value = selectedAccount.type ?? "ASSET";
+        }
+
+        const normalBalanceSelect = form.elements.namedItem(
+            "normal-balance"
+        ) as HTMLSelectElement | null;
+        if (normalBalanceSelect) {
+            normalBalanceSelect.value =
+                selectedAccount.normal_balance === "CREDIT"
+                    ? "Credit"
+                    : "Debit";
+        }
+
+        const isPostableInput = form.elements.namedItem("is-postable") as
+            | HTMLInputElement
+            | null;
+        if (isPostableInput) {
+            isPostableInput.checked = Boolean(selectedAccount.is_postable);
+        }
+
+        const isActiveInput = form.elements.namedItem("is-active") as
+            | HTMLInputElement
+            | null;
+        if (isActiveInput) {
+            isActiveInput.checked = selectedAccount.status === "ACTIVE";
+        }
+    }, [selectedAccount]);
+
     const isLoadingAccounts = !error && accounts.length === 0;
+
+    const handleClose = () => {
+        setOpen(false);
+        setSelectedAccount(null);
+        formRef.current?.reset();
+    };
+
+    const handleEdit = (accountId: string) => {
+        const accountToEdit = accounts.find((account) => account.id === accountId);
+        if (!accountToEdit) {
+            return;
+        }
+
+        setSelectedAccount(accountToEdit);
+        setOpen(true);
+    };
 
     const handleSave = async () => {
         if (!formRef.current) {
@@ -90,7 +187,7 @@ export default function ChartOfAccountsPage() {
                 ? parentAccount
                 : null;
 
-        let ledgerId: string | null = null;
+        let ledgerId: string | null = selectedAccount?.ledger_id ?? null;
         if (selectedParentId) {
             const parentAccountDetails = accounts.find(
                 (account) => account.id === selectedParentId
@@ -128,20 +225,45 @@ export default function ChartOfAccountsPage() {
 
         try {
             setError(null);
-            const response = await fetch("/api/finance-accounting/accounts", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
+            if (selectedAccount) {
+                const response = await fetch(
+                    `/api/finance-accounting/accounts/${selectedAccount.id}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                    }
+                );
 
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                const updatedAccount = (await response.json()) as Account;
+                setAccounts((prevAccounts) =>
+                    prevAccounts.map((account) =>
+                        account.id === updatedAccount.id ? updatedAccount : account
+                    )
+                );
+                setSelectedAccount(null);
+            } else {
+                const response = await fetch("/api/finance-accounting/accounts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                const newAccount = (await response.json()) as Account;
+                setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             }
-
-            const newAccount = (await response.json()) as Account;
-            setAccounts((prevAccounts) => [...prevAccounts, newAccount]);
             formRef.current.reset();
             setOpen(false);
         } catch (saveError) {
@@ -164,7 +286,11 @@ export default function ChartOfAccountsPage() {
                         <button
                             type="button"
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            onClick={() => setOpen(true)}
+                            onClick={() => {
+                                setSelectedAccount(null);
+                                formRef.current?.reset();
+                                setOpen(true);
+                            }}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -203,6 +329,7 @@ export default function ChartOfAccountsPage() {
                                             <div className="flex-1 min-h-0 min-w-full overflow-y-auto overflow-x-auto">
                                                 <ChartOfAccountsTable
                                                     accounts={accounts}
+                                                    onEdit={handleEdit}
                                                 />
                                             </div>
                                         </>
@@ -214,7 +341,7 @@ export default function ChartOfAccountsPage() {
 
                     <Dialog
                         open={open}
-                        onClose={setOpen}
+                        onClose={handleClose}
                         className="relative z-10"
                     >
                         <div className="fixed inset-0" />
@@ -230,14 +357,14 @@ export default function ChartOfAccountsPage() {
                                             <div className="bg-indigo-700 px-4 py-6 sm:px-6">
                                                 <div className="flex items-center justify-between">
                                                     <DialogTitle className="text-base font-semibold text-white">
-                                                        Add Chart of Account
+                                                        {selectedAccount
+                                                            ? "Edit Chart of Account"
+                                                            : "Add Chart of Account"}
                                                     </DialogTitle>
                                                     <div className="ml-3 flex h-7 items-center">
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                setOpen(false)
-                                                            }
+                                                            onClick={handleClose}
                                                             className="relative rounded-md text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                                                         >
                                                             <span className="absolute -inset-2.5" />
@@ -505,9 +632,7 @@ export default function ChartOfAccountsPage() {
                                                 <button
                                                     type="button"
                                                     className="rounded px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                                    onClick={() =>
-                                                        setOpen(false)
-                                                    }
+                                                    onClick={handleClose}
                                                 >
                                                     Cancel
                                                 </button>

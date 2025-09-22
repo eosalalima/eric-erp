@@ -21,6 +21,7 @@ type SortConfig = {
 
 type ChartOfAccountsTableProps = {
     accounts: Account[];
+    onEdit: (accountId: string) => void;
 };
 
 const directionLabels: Record<SortDirection, string> = {
@@ -61,6 +62,7 @@ const SortIndicator = ({
 
 export default function ChartOfAccountsTable({
     accounts,
+    onEdit,
 }: ChartOfAccountsTableProps) {
     const [sortConfig, setSortConfig] = useState<SortConfig>({
         key: "code",
@@ -208,6 +210,7 @@ export default function ChartOfAccountsTable({
                                         type="button"
                                         className="text-indigo-600 hover:text-indigo-900"
                                         aria-label="Edit"
+                                        onClick={() => onEdit(account.id)}
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
