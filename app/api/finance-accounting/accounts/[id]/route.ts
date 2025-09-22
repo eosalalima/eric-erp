@@ -14,6 +14,58 @@ type AccountType = (typeof ACCOUNT_TYPES)[number];
 const NORMAL_BALANCES = ["DEBIT", "CREDIT"] as const;
 type NormalBalance = (typeof NORMAL_BALANCES)[number];
 
+export async function DELETE(
+    _req: NextRequest,
+    { params }: { params: { id?: string } }
+) {
+    const accountId = params?.id;
+
+    if (!accountId || typeof accountId !== "string" || accountId.trim() === "") {
+        return NextResponse.json(
+            { message: "Invalid account id" },
+            { status: 400 }
+        );
+    }
+
+    try {
+        await prisma.account.delete({ where: { id: accountId } });
+
+        return NextResponse.json(
+            { message: "Account deleted successfully" },
+            { status: 200 }
+        );
+    } catch (error) {
+        if (
+            error instanceof PrismaClientKnownRequestError &&
+            error.code === "P2025"
+        ) {
+            return NextResponse.json(
+                { message: "Account not found" },
+                { status: 404 }
+            );
+        }
+
+        if (
+            error instanceof PrismaClientKnownRequestError &&
+            error.code === "P2003"
+        ) {
+            return NextResponse.json(
+                {
+                    message:
+                        "Account cannot be deleted because it is referenced by other records.",
+                },
+                { status: 409 }
+            );
+        }
+
+        console.error("Failed to delete account", error);
+        return NextResponse.json(
+            { message: "Failed to delete account" },
+            { status: 500 }
+        );
+    }
+}
+
 export async function PUT(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
