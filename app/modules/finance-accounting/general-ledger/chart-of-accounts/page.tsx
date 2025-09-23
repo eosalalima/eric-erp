@@ -3,10 +3,10 @@
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
 import ChartOfAccountsTable from "./ChartOfAccountsTable";
-import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { useState, useEffect, useRef, ChangeEvent, useMemo } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, UsersIcon, ChartBarIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChartBarIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import {
     CheckCircleIcon,
     XCircleIcon as AlertXCircleIcon,
@@ -72,6 +72,7 @@ export default function ChartOfAccountsPage() {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [touchedFields, setTouchedFields] =
         useState<Record<keyof FormValues, boolean>>(defaultTouchedFields);
+    const [searchQuery, setSearchQuery] = useState("");
     const formRef = useRef<HTMLFormElement>(null);
 
     const validateRequiredFields = (values: FormValues) => {
@@ -263,6 +264,23 @@ export default function ChartOfAccountsPage() {
             isPostableField.checked = Boolean(selectedAccount.is_postable);
         }
     }, [selectedAccount, open]);
+
+    const filteredAccounts = useMemo(() => {
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+
+        if (!normalizedQuery) {
+            return accounts;
+        }
+
+        return accounts.filter((account) => {
+            const code = account.code?.toLowerCase() ?? "";
+            const name = account.name?.toLowerCase() ?? "";
+
+            return (
+                code.includes(normalizedQuery) || name.includes(normalizedQuery)
+            );
+        });
+    }, [accounts, searchQuery]);
 
     const isLoadingAccounts = !fetchError && accounts.length === 0;
 
@@ -523,6 +541,10 @@ export default function ChartOfAccountsPage() {
                                     name="query"
                                     type="text"
                                     placeholder="Enter account name or code"
+                                    value={searchQuery}
+                                    onChange={(event) => {
+                                        setSearchQuery(event.target.value);
+                                    }}
                                     className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6"
                                 />
                                 <ChartBarIcon
@@ -617,7 +639,7 @@ export default function ChartOfAccountsPage() {
                                                 {fetchError}
                                             </p>
                                         </div>
-                                    ) : accounts.length === 0 ? (
+                                    ) : filteredAccounts.length === 0 ? (
                                         <div className="p-4 text-sm text-gray-500">
                                             No accounts found.
                                         </div>
@@ -625,7 +647,7 @@ export default function ChartOfAccountsPage() {
                                         <>
                                             <div className="flex-1 min-h-0 min-w-full overflow-y-auto overflow-x-auto">
                                                 <ChartOfAccountsTable
-                                                    accounts={accounts}
+                                                    accounts={filteredAccounts}
                                                     onEdit={(account) => {
                                                         handleEdit(account.id);
                                                     }}
