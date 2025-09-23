@@ -6,7 +6,7 @@ import ChartOfAccountsTable from "./ChartOfAccountsTable";
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, UsersIcon, ChartBarIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import {
     CheckCircleIcon,
     XCircleIcon as AlertXCircleIcon,
@@ -515,8 +515,29 @@ export default function ChartOfAccountsPage() {
                     <Breadcrumb items={items} />
                     <PageHeader title="Chart of Accounts" />
 
-                    <div className="flex items-center justify-between">
-                        <div />
+                    <div className="mt-5 flex items-center justify-between">
+                        <div className="mt-2 flex">
+                            <div className="-mr-px grid grow grid-cols-1 focus-within:relative">
+                                <input
+                                    id="query"
+                                    name="query"
+                                    type="text"
+                                    placeholder="Enter account name"
+                                    className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6"
+                                />
+                                <ChartBarIcon
+                                    aria-hidden="true"
+                                    className="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="flex shrink-0 items-center gap-x-1.5 rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 hover:bg-gray-50 focus:relative focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
+                            >
+                                <MagnifyingGlassIcon aria-hidden="true" className="-ml-0.5 size-4 text-gray-400" />
+                                Search
+                            </button>
+                        </div>
                         <button
                             type="button"
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -668,11 +689,9 @@ export default function ChartOfAccountsPage() {
                                                 </div>
                                                 <div className="mt-1">
                                                     <p className="text-sm text-indigo-300">
-                                                        Lorem, ipsum dolor sit
-                                                        amet consectetur
-                                                        adipisicing elit aliquam
-                                                        ad hic recusandae
-                                                        soluta.
+                                                        {selectedAccount
+                                                            ? "Update or modify the details of an existing account in the chart of accounts."
+                                                            : "Create a new account entry in the chart of accounts with details such as code, name, type, and hierarchy."}                                                        
                                                     </p>
                                                 </div>
                                             </div>
