@@ -6,7 +6,11 @@ import ChartOfAccountsTable from "./ChartOfAccountsTable";
 import { useState, useEffect, useRef, ChangeEvent, useMemo } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, ChartBarIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+    ChevronDownIcon,
+    ChartBarIcon,
+    MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import {
     CheckCircleIcon,
     XCircleIcon as AlertXCircleIcon,
@@ -545,7 +549,7 @@ export default function ChartOfAccountsPage() {
                                     onChange={(event) => {
                                         setSearchQuery(event.target.value);
                                     }}
-                                    className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6"
+                                    className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                 />
                                 <ChartBarIcon
                                     aria-hidden="true"
@@ -556,7 +560,10 @@ export default function ChartOfAccountsPage() {
                                 type="button"
                                 className="flex shrink-0 items-center gap-x-1.5 rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 hover:bg-gray-50 focus:relative focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
                             >
-                                <MagnifyingGlassIcon aria-hidden="true" className="-ml-0.5 size-4 text-gray-400" />
+                                <MagnifyingGlassIcon
+                                    aria-hidden="true"
+                                    className="-ml-0.5 size-4 text-gray-400"
+                                />
                                 Search
                             </button>
                         </div>
@@ -713,7 +720,7 @@ export default function ChartOfAccountsPage() {
                                                     <p className="text-sm text-indigo-300">
                                                         {selectedAccount
                                                             ? "Update or modify the details of an existing account in the chart of accounts."
-                                                            : "Create a new account entry in the chart of accounts with details such as code, name, type, and hierarchy."}                                                        
+                                                            : "Create a new account entry in the chart of accounts with details such as code, name, type, and hierarchy."}
                                                     </p>
                                                 </div>
                                             </div>

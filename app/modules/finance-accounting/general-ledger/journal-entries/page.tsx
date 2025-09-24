@@ -123,7 +123,6 @@ export default function JournalEntriesPage() {
                     <Breadcrumb items={items} />
                     <PageHeader
                         title="Journal Entries"
-                        description="Review, search, and monitor journal entries posted to the general ledger."
                     />
 
                     <div className="mt-5 flex flex-wrap items-center gap-4">
@@ -139,7 +138,7 @@ export default function JournalEntriesPage() {
                                         onChange={(event) => {
                                             setSearchQuery(event.target.value);
                                         }}
-                                        className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                        className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                     />
                                     <MagnifyingGlassIcon
                                         aria-hidden="true"
@@ -148,7 +147,7 @@ export default function JournalEntriesPage() {
                                 </div>
                                 <button
                                     type="button"
-                                    className="flex shrink-0 items-center gap-x-1.5 rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 hover:bg-gray-50 focus:relative focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
+                                    className="flex shrink-0 items-center gap-x-1.5 rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900  outline-1 -outline-offset-1 outline-gray-300 hover:bg-gray-50 focus:relative focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
                                 >
                                     <MagnifyingGlassIcon
                                         aria-hidden="true"
