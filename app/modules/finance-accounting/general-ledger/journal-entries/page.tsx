@@ -6,9 +6,7 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import Breadcrumb from "@/components/layout/Breadcrumb";
 import PageHeader from "@/components/layout/PageHeader";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
-import JournalEntriesTable, {
-    JournalEntry,
-} from "./JournalEntriesTable";
+import JournalEntriesTable, { JournalEntry } from "./JournalEntriesTable";
 
 const items = [
     { name: "Home", href: "/modules/finance-accounting" },
@@ -121,9 +119,7 @@ export default function JournalEntriesPage() {
             <SignedIn>
                 <div className="flex min-h-screen flex-col p-5">
                     <Breadcrumb items={items} />
-                    <PageHeader
-                        title="Journal Entries"
-                    />
+                    <PageHeader title="Journal Entries" />
 
                     <div className="mt-5 flex flex-wrap items-center gap-4">
                         <div className="flex w-full flex-1 flex-wrap items-center gap-3 sm:flex-nowrap">
@@ -161,7 +157,10 @@ export default function JournalEntriesPage() {
                                     htmlFor="status-filter"
                                     className="inline-flex items-center gap-1 text-sm font-medium text-gray-700"
                                 >
-                                    <FunnelIcon aria-hidden="true" className="size-4 text-gray-400" />
+                                    <FunnelIcon
+                                        aria-hidden="true"
+                                        className="size-4 text-gray-400"
+                                    />
                                     Status
                                 </label>
                                 <select
@@ -169,12 +168,17 @@ export default function JournalEntriesPage() {
                                     name="status-filter"
                                     value={statusFilter}
                                     onChange={(event) => {
-                                        setStatusFilter(event.target.value as StatusFilter);
+                                        setStatusFilter(
+                                            event.target.value as StatusFilter
+                                        );
                                     }}
                                     className="rounded-md border-0 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600"
                                 >
                                     {statusOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
                                             {option.label}
                                         </option>
                                     ))}
@@ -186,12 +190,13 @@ export default function JournalEntriesPage() {
                             className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <PlusIcon aria-hidden="true" className="size-5" />
-                            New entry
+                            New Entry
                         </button>
                     </div>
 
                     <div className="mt-4 text-sm text-gray-500">
-                        Showing {filteredEntries.length} of {entries.length} journal entries
+                        Showing {filteredEntries.length} of {entries.length}{" "}
+                        journal entries
                     </div>
 
                     <div className="mt-8 flex flex-1 min-h-0 flex-col">
@@ -200,11 +205,14 @@ export default function JournalEntriesPage() {
                                 <div className="flex flex-1 min-h-0 flex-col overflow-hidden shadow outline-1 outline-black/5 sm:rounded-lg">
                                     {filteredEntries.length === 0 ? (
                                         <div className="p-4 text-sm text-gray-500">
-                                            No journal entries match your filters.
+                                            No journal entries match your
+                                            filters.
                                         </div>
                                     ) : (
                                         <div className="flex-1 min-h-0 overflow-y-auto">
-                                            <JournalEntriesTable entries={filteredEntries} />
+                                            <JournalEntriesTable
+                                                entries={filteredEntries}
+                                            />
                                         </div>
                                     )}
                                 </div>
