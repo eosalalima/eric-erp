@@ -97,6 +97,12 @@ const statusOptions: Array<{ label: string; value: StatusFilter }> = [
     { label: "Reversed", value: "Reversed" },
 ];
 
+export const ledgerOptions: Array<{ label: string; value: string }> = [
+    { label: "Corporate Ledger", value: "corporate" },
+    { label: "International Ledger", value: "international" },
+    { label: "Subsidiary Ledger", value: "subsidiary" },
+];
+
 type JournalLineForm = {
     account: string;
     description: string;
@@ -106,6 +112,7 @@ type JournalLineForm = {
 };
 
 type JournalEntryForm = {
+    ledger: string;
     entryDate: string;
     period: string;
     currency: string;
@@ -124,6 +131,7 @@ type JournalLineError = {
 };
 
 type JournalEntryErrors = {
+    ledger?: string;
     entryDate?: string;
     period?: string;
     currency?: string;
@@ -143,6 +151,7 @@ const createEmptyLine = (): JournalLineForm => ({
 });
 
 const createDefaultEntryForm = (): JournalEntryForm => ({
+    ledger: "",
     entryDate: "",
     period: "",
     currency: "USD",
@@ -154,6 +163,7 @@ const createDefaultEntryForm = (): JournalEntryForm => ({
 });
 
 const createDefaultErrors = (lineCount: number): JournalEntryErrors => ({
+    ledger: undefined,
     lines: Array.from({ length: lineCount }, () => ({} as JournalLineError)),
 });
 
@@ -227,6 +237,15 @@ const validateEntryForm = (
     const errors: JournalEntryErrors = {
         ...createDefaultErrors(form.lines.length),
     };
+
+    const ledgerValue = form.ledger.trim();
+    if (!ledgerValue) {
+        errors.ledger = "Ledger is required.";
+    } else if (
+        !ledgerOptions.some((option) => option.value === ledgerValue)
+    ) {
+        errors.ledger = "Select a valid ledger.";
+    }
 
     if (!form.period.trim()) {
         errors.period = "Period is required.";
