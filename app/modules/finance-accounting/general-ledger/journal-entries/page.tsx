@@ -97,6 +97,12 @@ const statusOptions: Array<{ label: string; value: StatusFilter }> = [
     { label: "Reversed", value: "Reversed" },
 ];
 
+export const ledgerOptions: Array<{ label: string; value: string }> = [
+    { label: "Corporate Ledger", value: "corporate" },
+    { label: "International Ledger", value: "international" },
+    { label: "Subsidiary Ledger", value: "subsidiary" },
+];
+
 type JournalLineForm = {
     account: string;
     description: string;
@@ -249,6 +255,15 @@ const validateEntryForm = (
 
     if (!form.ledger.trim()) {
         errors.ledger = "Ledger is required.";
+    }
+
+    const ledgerValue = form.ledger.trim();
+    if (!ledgerValue) {
+        errors.ledger = "Ledger is required.";
+    } else if (
+        !ledgerOptions.some((option) => option.value === ledgerValue)
+    ) {
+        errors.ledger = "Select a valid ledger.";
     }
 
     if (!form.period.trim()) {
