@@ -339,9 +339,7 @@ export default function JournalEntriesPage() {
                 debitValue:
                     debitInvalid || debitValue === null ? null : debitValue,
                 creditValue:
-                    creditInvalid || creditValue === null
-                        ? null
-                        : creditValue,
+                    creditInvalid || creditValue === null ? null : creditValue,
                 debitInvalid,
                 creditInvalid,
             };
@@ -428,9 +426,7 @@ export default function JournalEntriesPage() {
         }));
     };
 
-    const handleAutoReverseChange = (
-        event: ChangeEvent<HTMLInputElement>
-    ) => {
+    const handleAutoReverseChange = (event: ChangeEvent<HTMLInputElement>) => {
         const checked = event.target.checked;
         setEntryForm((current) => ({
             ...current,
@@ -595,9 +591,7 @@ export default function JournalEntriesPage() {
             return;
         }
 
-        const referenceNumber = entryForm.referenceNumber
-            .trim()
-            .toUpperCase();
+        const referenceNumber = entryForm.referenceNumber.trim().toUpperCase();
         const memo = entryForm.memo.trim();
         const description =
             memo || entryForm.referenceNumber.trim() || "New journal entry";
@@ -784,11 +778,12 @@ export default function JournalEntriesPage() {
                                                         Date
                                                     </span>
                                                     <span>
-                                                        {entryForm.entryDate || "Not set"}
+                                                        {entryForm.entryDate ||
+                                                            "Not set"}
                                                     </span>
                                                 </div>
                                             </div>
-                                        </DialogTitle>
+                                        </button>
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2">
                                                 <button
@@ -800,7 +795,9 @@ export default function JournalEntriesPage() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={handleSubmitForApproval}
+                                                    onClick={
+                                                        handleSubmitForApproval
+                                                    }
                                                     className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                                 >
                                                     Submit
@@ -828,7 +825,10 @@ export default function JournalEntriesPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    <form className="mt-6" onSubmit={handleSubmit}>
+                                    <form
+                                        className="mt-6"
+                                        onSubmit={handleSubmit}
+                                    >
                                         {formErrors.form ? (
                                             <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
                                                 {formErrors.form}
@@ -847,7 +847,9 @@ export default function JournalEntriesPage() {
                                                         <select
                                                             id="ledger"
                                                             name="ledger"
-                                                            value={entryForm.ledger}
+                                                            value={
+                                                                entryForm.ledger
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "ledger"
                                                             )}
@@ -856,18 +858,28 @@ export default function JournalEntriesPage() {
                                                             <option value="">
                                                                 Select a ledger
                                                             </option>
-                                                            {ledgerOptions.map((option) => (
-                                                                <option
-                                                                    key={option.value}
-                                                                    value={option.value}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
+                                                            {ledgerOptions.map(
+                                                                (option) => (
+                                                                    <option
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </option>
+                                                                )
+                                                            )}
                                                         </select>
                                                         {formErrors.ledger ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.ledger}
+                                                                {
+                                                                    formErrors.ledger
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -881,7 +893,9 @@ export default function JournalEntriesPage() {
                                                         <select
                                                             id="period"
                                                             name="period"
-                                                            value={entryForm.period}
+                                                            value={
+                                                                entryForm.period
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "period"
                                                             )}
@@ -890,18 +904,28 @@ export default function JournalEntriesPage() {
                                                             <option value="">
                                                                 Select a period
                                                             </option>
-                                                            {periodOptions.map((option) => (
-                                                                <option
-                                                                    key={option.value}
-                                                                    value={option.value}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
+                                                            {periodOptions.map(
+                                                                (option) => (
+                                                                    <option
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </option>
+                                                                )
+                                                            )}
                                                         </select>
                                                         {formErrors.period ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.period}
+                                                                {
+                                                                    formErrors.period
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -916,7 +940,9 @@ export default function JournalEntriesPage() {
                                                             type="date"
                                                             id="entryDate"
                                                             name="entryDate"
-                                                            value={entryForm.entryDate}
+                                                            value={
+                                                                entryForm.entryDate
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "entryDate"
                                                             )}
@@ -924,7 +950,9 @@ export default function JournalEntriesPage() {
                                                         />
                                                         {formErrors.entryDate ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.entryDate}
+                                                                {
+                                                                    formErrors.entryDate
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -939,7 +967,9 @@ export default function JournalEntriesPage() {
                                                             type="date"
                                                             id="postingDate"
                                                             name="postingDate"
-                                                            value={entryForm.postingDate}
+                                                            value={
+                                                                entryForm.postingDate
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "postingDate"
                                                             )}
@@ -947,7 +977,9 @@ export default function JournalEntriesPage() {
                                                         />
                                                         {formErrors.postingDate ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.postingDate}
+                                                                {
+                                                                    formErrors.postingDate
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -961,24 +993,38 @@ export default function JournalEntriesPage() {
                                                         <select
                                                             id="currency"
                                                             name="currency"
-                                                            value={entryForm.currency}
+                                                            value={
+                                                                entryForm.currency
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "currency"
                                                             )}
                                                             className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                         >
                                                             <option value="">
-                                                                Select a currency
+                                                                Select a
+                                                                currency
                                                             </option>
-                                                            {currencyOptions.map((option) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
+                                                            {currencyOptions.map(
+                                                                (option) => (
+                                                                    <option
+                                                                        key={
+                                                                            option
+                                                                        }
+                                                                        value={
+                                                                            option
+                                                                        }
+                                                                    >
+                                                                        {option}
+                                                                    </option>
+                                                                )
+                                                            )}
                                                         </select>
                                                         {formErrors.currency ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.currency}
+                                                                {
+                                                                    formErrors.currency
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -992,7 +1038,9 @@ export default function JournalEntriesPage() {
                                                         <select
                                                             id="status"
                                                             name="status"
-                                                            value={entryForm.status}
+                                                            value={
+                                                                entryForm.status
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "status"
                                                             )}
@@ -1002,19 +1050,35 @@ export default function JournalEntriesPage() {
                                                                 Select a status
                                                             </option>
                                                             {statusOptions
-                                                                .filter((option) => option.value !== "all")
-                                                                .map((option) => (
-                                                                    <option
-                                                                        key={option.value}
-                                                                        value={option.value}
-                                                                    >
-                                                                        {option.label}
-                                                                    </option>
-                                                                ))}
+                                                                .filter(
+                                                                    (option) =>
+                                                                        option.value !==
+                                                                        "all"
+                                                                )
+                                                                .map(
+                                                                    (
+                                                                        option
+                                                                    ) => (
+                                                                        <option
+                                                                            key={
+                                                                                option.value
+                                                                            }
+                                                                            value={
+                                                                                option.value
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                option.label
+                                                                            }
+                                                                        </option>
+                                                                    )
+                                                                )}
                                                         </select>
                                                         {formErrors.status ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.status}
+                                                                {
+                                                                    formErrors.status
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -1029,7 +1093,9 @@ export default function JournalEntriesPage() {
                                                             type="text"
                                                             id="reference"
                                                             name="reference"
-                                                            value={entryForm.reference}
+                                                            value={
+                                                                entryForm.reference
+                                                            }
                                                             onChange={handleEntryFieldChange(
                                                                 "reference"
                                                             )}
@@ -1045,14 +1111,20 @@ export default function JournalEntriesPage() {
                                                         <textarea
                                                             id="memo"
                                                             name="memo"
-                                                            value={entryForm.memo}
-                                                            onChange={handleMemoChange}
+                                                            value={
+                                                                entryForm.memo
+                                                            }
+                                                            onChange={
+                                                                handleMemoChange
+                                                            }
                                                             className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                             placeholder="Describe the purpose of the journal entry"
                                                         />
                                                         {formErrors.memo ? (
                                                             <p className="mt-1 text-sm text-red-600">
-                                                                {formErrors.memo}
+                                                                {
+                                                                    formErrors.memo
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
@@ -1064,154 +1136,204 @@ export default function JournalEntriesPage() {
                                                         </h3>
                                                         <button
                                                             type="button"
-                                                            onClick={addJournalLine}
+                                                            onClick={
+                                                                addJournalLine
+                                                            }
                                                             className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                                         >
-                                                            <PlusIcon aria-hidden="true" className="size-4 text-gray-500" />
+                                                            <PlusIcon
+                                                                aria-hidden="true"
+                                                                className="size-4 text-gray-500"
+                                                            />
                                                             Add line
                                                         </button>
                                                     </div>
                                                     <div className="space-y-3">
-                                                        {entryForm.lines.map((line, index) => {
-                                                            const lineErrors =
-                                                                formErrors.lines[index] || {};
+                                                        {entryForm.lines.map(
+                                                            (line, index) => {
+                                                                const lineErrors =
+                                                                    formErrors
+                                                                        .lines[
+                                                                        index
+                                                                    ] || {};
 
-                                                            return (
-                                                                <div
-                                                                    key={`journal-line-${index}`}
-                                                                    className="rounded-lg border border-gray-200 p-4"
-                                                                >
-                                                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                                                        <div className="lg:col-span-1">
-                                                                            <label
-                                                                                htmlFor={`line-account-${index}`}
-                                                                                className="block text-sm font-medium text-gray-700"
-                                                                            >
-                                                                                Account
-                                                                            </label>
-                                                                            <input
-                                                                                type="text"
-                                                                                id={`line-account-${index}`}
-                                                                                name={`line-account-${index}`}
-                                                                                value={line.account}
-                                                                                onChange={(event) =>
-                                                                                    handleLineChange(
-                                                                                        index,
-                                                                                        "account",
-                                                                                        event.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                                placeholder="Account name or number"
-                                                                            />
-                                                                            {lineErrors.account ? (
-                                                                                <p className="mt-1 text-sm text-red-600">
-                                                                                    {lineErrors.account}
-                                                                                </p>
-                                                                            ) : null}
+                                                                return (
+                                                                    <div
+                                                                        key={`journal-line-${index}`}
+                                                                        className="rounded-lg border border-gray-200 p-4"
+                                                                    >
+                                                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                                                            <div className="lg:col-span-1">
+                                                                                <label
+                                                                                    htmlFor={`line-account-${index}`}
+                                                                                    className="block text-sm font-medium text-gray-700"
+                                                                                >
+                                                                                    Account
+                                                                                </label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    id={`line-account-${index}`}
+                                                                                    name={`line-account-${index}`}
+                                                                                    value={
+                                                                                        line.account
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        event
+                                                                                    ) =>
+                                                                                        handleLineChange(
+                                                                                            index,
+                                                                                            "account",
+                                                                                            event
+                                                                                                .target
+                                                                                                .value
+                                                                                        )
+                                                                                    }
+                                                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                    placeholder="Account name or number"
+                                                                                />
+                                                                                {lineErrors.account ? (
+                                                                                    <p className="mt-1 text-sm text-red-600">
+                                                                                        {
+                                                                                            lineErrors.account
+                                                                                        }
+                                                                                    </p>
+                                                                                ) : null}
+                                                                            </div>
+                                                                            <div>
+                                                                                <label
+                                                                                    htmlFor={`line-debit-${index}`}
+                                                                                    className="block text-sm font-medium text-gray-700"
+                                                                                >
+                                                                                    Debit
+                                                                                </label>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    id={`line-debit-${index}`}
+                                                                                    name={`line-debit-${index}`}
+                                                                                    min="0"
+                                                                                    step="0.01"
+                                                                                    value={
+                                                                                        line.debit
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        event
+                                                                                    ) =>
+                                                                                        handleLineChange(
+                                                                                            index,
+                                                                                            "debit",
+                                                                                            event
+                                                                                                .target
+                                                                                                .value
+                                                                                        )
+                                                                                    }
+                                                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                />
+                                                                                {lineErrors.debit ? (
+                                                                                    <p className="mt-1 text-sm text-red-600">
+                                                                                        {
+                                                                                            lineErrors.debit
+                                                                                        }
+                                                                                    </p>
+                                                                                ) : null}
+                                                                            </div>
+                                                                            <div>
+                                                                                <label
+                                                                                    htmlFor={`line-credit-${index}`}
+                                                                                    className="block text-sm font-medium text-gray-700"
+                                                                                >
+                                                                                    Credit
+                                                                                </label>{" "}
+                                                                                <input
+                                                                                    type="number"
+                                                                                    id={`line-credit-${index}`}
+                                                                                    name={`line-credit-${index}`}
+                                                                                    min="0"
+                                                                                    step="0.01"
+                                                                                    value={
+                                                                                        line.credit
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        event
+                                                                                    ) =>
+                                                                                        handleLineChange(
+                                                                                            index,
+                                                                                            "credit",
+                                                                                            event
+                                                                                                .target
+                                                                                                .value
+                                                                                        )
+                                                                                    }
+                                                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                />
+                                                                                {lineErrors.credit ? (
+                                                                                    <p className="mt-1 text-sm text-red-600">
+                                                                                        {
+                                                                                            lineErrors.credit
+                                                                                        }
+                                                                                    </p>
+                                                                                ) : null}
+                                                                            </div>
+                                                                            <div className="lg:col-span-1">
+                                                                                <label
+                                                                                    htmlFor={`line-memo-${index}`}
+                                                                                    className="block text-sm font-medium text-gray-700"
+                                                                                >
+                                                                                    Line
+                                                                                    Memo
+                                                                                </label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    id={`line-memo-${index}`}
+                                                                                    name={`line-memo-${index}`}
+                                                                                    value={
+                                                                                        line.memo
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        event
+                                                                                    ) =>
+                                                                                        handleLineChange(
+                                                                                            index,
+                                                                                            "memo",
+                                                                                            event
+                                                                                                .target
+                                                                                                .value
+                                                                                        )
+                                                                                    }
+                                                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                    placeholder="Optional memo"
+                                                                                />
+                                                                            </div>
                                                                         </div>
-                                                                        <div>
-                                                                            <label
-                                                                                htmlFor={`line-debit-${index}`}
-                                                                                className="block text-sm font-medium text-gray-700"
-                                                                            >
-                                                                                Debit
-                                                                            </label>
-                                                                            <input
-                                                                                type="number"
-                                                                                id={`line-debit-${index}`}
-                                                                                name={`line-debit-${index}`}
-                                                                                min="0"
-                                                                                step="0.01"
-                                                                                value={line.debit}
-                                                                                onChange={(event) =>
-                                                                                    handleLineChange(
-                                                                                        index,
-                                                                                        "debit",
-                                                                                        event.target.value
-                                                                                    )
+                                                                        {lineErrors.amount ? (
+                                                                            <p className="mt-3 text-sm text-red-600">
+                                                                                {
+                                                                                    lineErrors.amount
                                                                                 }
-                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            />
-                                                                            {lineErrors.debit ? (
-                                                                                <p className="mt-1 text-sm text-red-600">
-                                                                                    {lineErrors.debit}
-                                                                                </p>
-                                                                            ) : null}
-                                                                        </div>
-                                                                        <div>
-                                                                            <label
-                                                                                htmlFor={`line-credit-${index}`}
-                                                                                className="block text-sm font-medium text-gray-700"
-                                                                            >
-                                                                                Credit
-                                                                            </label>                                                                            <input
-                                                                                type="number"
-                                                                                id={`line-credit-${index}`}
-                                                                                name={`line-credit-${index}`}
-                                                                                min="0"
-                                                                                step="0.01"
-                                                                                value={line.credit}
-                                                                                onChange={(event) =>
-                                                                                    handleLineChange(
-                                                                                        index,
-                                                                                        "credit",
-                                                                                        event.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            />
-                                                                            {lineErrors.credit ? (
-                                                                                <p className="mt-1 text-sm text-red-600">
-                                                                                    {lineErrors.credit}
-                                                                                </p>
-                                                                            ) : null}
-                                                                        </div>
-                                                                        <div className="lg:col-span-1">
-                                                                            <label
-                                                                                htmlFor={`line-memo-${index}`}
-                                                                                className="block text-sm font-medium text-gray-700"
-                                                                            >
-                                                                                Line Memo
-                                                                            </label>
-                                                                            <input
-                                                                                type="text"
-                                                                                id={`line-memo-${index}`}
-                                                                                name={`line-memo-${index}`}
-                                                                                value={line.memo}
-                                                                                onChange={(event) =>
-                                                                                    handleLineChange(
-                                                                                        index,
-                                                                                        "memo",
-                                                                                        event.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                                placeholder="Optional memo"
-                                                                            />
-                                                                        </div>
+                                                                            </p>
+                                                                        ) : null}
+                                                                        {entryForm
+                                                                            .lines
+                                                                            .length >
+                                                                        1 ? (
+                                                                            <div className="mt-4 flex justify-end">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        removeJournalLine(
+                                                                                            index
+                                                                                        )
+                                                                                    }
+                                                                                    className="text-sm font-medium text-red-600 hover:text-red-500"
+                                                                                >
+                                                                                    Remove
+                                                                                    line
+                                                                                </button>
+                                                                            </div>
+                                                                        ) : null}
                                                                     </div>
-                                                                    {lineErrors.amount ? (
-                                                                        <p className="mt-3 text-sm text-red-600">
-                                                                            {lineErrors.amount}
-                                                                        </p>
-                                                                    ) : null}
-                                                                    {entryForm.lines.length > 1 ? (
-                                                                        <div className="mt-4 flex justify-end">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() =>
-                                                                                    removeJournalLine(index)
-                                                                                }
-                                                                                className="text-sm font-medium text-red-600 hover:text-red-500"
-                                                                            >
-                                                                                Remove line
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : null}
-                                                                </div>
-                                                            );
-                                                        })}
+                                                                );
+                                                            }
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1223,7 +1345,11 @@ export default function JournalEntriesPage() {
                                                                 Posting Preview
                                                             </h3>
                                                             <span
-                                                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${postingPreview.isBalanced ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"}`}
+                                                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                                    postingPreview.isBalanced
+                                                                        ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                                                                        : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"
+                                                                }`}
                                                             >
                                                                 {postingPreview.isBalanced
                                                                     ? "Balanced"
@@ -1231,71 +1357,97 @@ export default function JournalEntriesPage() {
                                                             </span>
                                                         </div>
                                                         <p className="mt-1 text-xs text-gray-500">
-                                                            Preview updates as you add accounts and amounts.
+                                                            Preview updates as
+                                                            you add accounts and
+                                                            amounts.
                                                         </p>
                                                     </div>
                                                     <div className="space-y-5 px-5 py-4">
                                                         <div className="space-y-3">
-                                                            {postingPreview.lines.map((line) => {
-                                                                const hasContent =
-                                                                    line.account ||
-                                                                    line.memo ||
-                                                                    line.debitRaw ||
-                                                                    line.creditRaw;
+                                                            {postingPreview.lines.map(
+                                                                (line) => {
+                                                                    const hasContent =
+                                                                        line.account ||
+                                                                        line.memo ||
+                                                                        line.debitRaw ||
+                                                                        line.creditRaw;
 
-                                                                return (
-                                                                    <div
-                                                                        key={`preview-line-${line.id}`}
-                                                                        className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
-                                                                    >
-                                                                        <div className="min-w-0">
-                                                                            <p className="truncate text-sm font-medium text-gray-900">
-                                                                                {line.account || `Line ${line.id + 1}`}
-                                                                            </p>
-                                                                            {line.memo ? (
-                                                                                <p className="mt-0.5 text-xs text-gray-500">
-                                                                                    {line.memo}
+                                                                    return (
+                                                                        <div
+                                                                            key={`preview-line-${line.id}`}
+                                                                            className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+                                                                        >
+                                                                            <div className="min-w-0">
+                                                                                <p className="truncate text-sm font-medium text-gray-900">
+                                                                                    {line.account ||
+                                                                                        `Line ${
+                                                                                            line.id +
+                                                                                            1
+                                                                                        }`}
                                                                                 </p>
-                                                                            ) : null}
-                                                                            {!hasContent ? (
-                                                                                <p className="mt-0.5 text-xs text-gray-400">
-                                                                                    Waiting for details
-                                                                                </p>
-                                                                            ) : null}
-                                                                        </div>
-                                                                        <div className="flex flex-shrink-0 gap-6 text-right">
-                                                                            <div>
-                                                                                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                                                                                    Debit
-                                                                                </p>
-                                                                                <p
-                                                                                    className={`text-sm font-semibold ${line.debitInvalid ? "text-red-600" : "text-sky-700"}`}
-                                                                                >
-                                                                                    {line.debitInvalid
-                                                                                        ? "Invalid"
-                                                                                        : line.debitValue !== null
-                                                                                        ? currencyFormatter.format(line.debitValue)
-                                                                                        : "—"}
-                                                                                </p>
+                                                                                {line.memo ? (
+                                                                                    <p className="mt-0.5 text-xs text-gray-500">
+                                                                                        {
+                                                                                            line.memo
+                                                                                        }
+                                                                                    </p>
+                                                                                ) : null}
+                                                                                {!hasContent ? (
+                                                                                    <p className="mt-0.5 text-xs text-gray-400">
+                                                                                        Waiting
+                                                                                        for
+                                                                                        details
+                                                                                    </p>
+                                                                                ) : null}
                                                                             </div>
-                                                                            <div>
-                                                                                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                                                                                    Credit
-                                                                                </p>
-                                                                                <p
-                                                                                    className={`text-sm font-semibold ${line.creditInvalid ? "text-red-600" : "text-indigo-700"}`}
-                                                                                >
-                                                                                    {line.creditInvalid
-                                                                                        ? "Invalid"
-                                                                                        : line.creditValue !== null
-                                                                                        ? currencyFormatter.format(line.creditValue)
-                                                                                        : "—"}
-                                                                                </p>
+                                                                            <div className="flex flex-shrink-0 gap-6 text-right">
+                                                                                <div>
+                                                                                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                                                                        Debit
+                                                                                    </p>
+                                                                                    <p
+                                                                                        className={`text-sm font-semibold ${
+                                                                                            line.debitInvalid
+                                                                                                ? "text-red-600"
+                                                                                                : "text-sky-700"
+                                                                                        }`}
+                                                                                    >
+                                                                                        {line.debitInvalid
+                                                                                            ? "Invalid"
+                                                                                            : line.debitValue !==
+                                                                                              null
+                                                                                            ? currencyFormatter.format(
+                                                                                                  line.debitValue
+                                                                                              )
+                                                                                            : "—"}
+                                                                                    </p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                                                                        Credit
+                                                                                    </p>
+                                                                                    <p
+                                                                                        className={`text-sm font-semibold ${
+                                                                                            line.creditInvalid
+                                                                                                ? "text-red-600"
+                                                                                                : "text-indigo-700"
+                                                                                        }`}
+                                                                                    >
+                                                                                        {line.creditInvalid
+                                                                                            ? "Invalid"
+                                                                                            : line.creditValue !==
+                                                                                              null
+                                                                                            ? currencyFormatter.format(
+                                                                                                  line.creditValue
+                                                                                              )
+                                                                                            : "—"}
+                                                                                    </p>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                );
-                                                            })}
+                                                                    );
+                                                                }
+                                                            )}
                                                         </div>
                                                         <div className="space-y-3 rounded-lg bg-slate-100 px-4 py-3 text-sm">
                                                             <div className="flex items-center justify-between">
@@ -1303,7 +1455,9 @@ export default function JournalEntriesPage() {
                                                                     Total debit
                                                                 </span>
                                                                 <span className="font-semibold text-sky-700">
-                                                                    {currencyFormatter.format(postingPreview.totalDebit)}
+                                                                    {currencyFormatter.format(
+                                                                        postingPreview.totalDebit
+                                                                    )}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between">
@@ -1311,7 +1465,9 @@ export default function JournalEntriesPage() {
                                                                     Total credit
                                                                 </span>
                                                                 <span className="font-semibold text-indigo-700">
-                                                                    {currencyFormatter.format(postingPreview.totalCredit)}
+                                                                    {currencyFormatter.format(
+                                                                        postingPreview.totalCredit
+                                                                    )}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between border-t border-white/60 pt-2 text-sm">
@@ -1319,10 +1475,16 @@ export default function JournalEntriesPage() {
                                                                     Difference
                                                                 </span>
                                                                 <span
-                                                                    className={`font-semibold ${postingPreview.isBalanced ? "text-emerald-600" : "text-amber-600"}`}
+                                                                    className={`font-semibold ${
+                                                                        postingPreview.isBalanced
+                                                                            ? "text-emerald-600"
+                                                                            : "text-amber-600"
+                                                                    }`}
                                                                 >
                                                                     {currencyFormatter.format(
-                                                                        Math.abs(postingPreview.difference)
+                                                                        Math.abs(
+                                                                            postingPreview.difference
+                                                                        )
                                                                     )}
                                                                 </span>
                                                             </div>
@@ -1338,20 +1500,35 @@ export default function JournalEntriesPage() {
                                                         </div>
                                                         <div className="border-t border-slate-200 pt-4">
                                                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                                Posting guidelines
+                                                                Posting
+                                                                guidelines
                                                             </p>
                                                             <ul className="mt-3 space-y-2 text-xs text-gray-600">
                                                                 <li className="flex gap-2">
                                                                     <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
-                                                                    Use a single debit or credit per line to keep balances clear.
+                                                                    Use a single
+                                                                    debit or
+                                                                    credit per
+                                                                    line to keep
+                                                                    balances
+                                                                    clear.
                                                                 </li>
                                                                 <li className="flex gap-2">
                                                                     <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
-                                                                    Totals must match exactly before you can post the entry.
+                                                                    Totals must
+                                                                    match
+                                                                    exactly
+                                                                    before you
+                                                                    can post the
+                                                                    entry.
                                                                 </li>
                                                                 <li className="flex gap-2">
                                                                     <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
-                                                                    Add memos to document the business purpose for each amount.
+                                                                    Add memos to
+                                                                    document the
+                                                                    business
+                                                                    purpose for
+                                                                    each amount.
                                                                 </li>
                                                             </ul>
                                                         </div>
