@@ -99,9 +99,10 @@ const statusOptions: Array<{ label: string; value: StatusFilter }> = [
 
 type JournalLineForm = {
     account: string;
+    description: string;
     debit: string;
     credit: string;
-    memo: string;
+    costCenter: string;
 };
 
 type JournalEntryForm = {
@@ -138,9 +139,10 @@ type JournalEntryErrors = {
 
 const createEmptyLine = (): JournalLineForm => ({
     account: "",
+    description: "",
     debit: "",
     credit: "",
-    memo: "",
+    costCenter: "",
 });
 
 const createDefaultEntryForm = (): JournalEntryForm => ({
@@ -158,6 +160,65 @@ const createDefaultEntryForm = (): JournalEntryForm => ({
 const createDefaultErrors = (lineCount: number): JournalEntryErrors => ({
     lines: Array.from({ length: lineCount }, () => ({} as JournalLineError)),
 });
+
+const summarizeJournalLines = (
+    lines: JournalLineForm[]
+): {
+    totalDebit: number;
+    totalCredit: number;
+    hasAmount: boolean;
+    lineErrors: JournalLineError[];
+} => {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let hasAmount = false;
+    const lineErrors = lines.map(() => ({} as JournalLineError));
+
+    lines.forEach((line, index) => {
+        const errors = lineErrors[index];
+
+        if (!line.account.trim()) {
+            errors.account = "Account is required.";
+        }
+
+        const debitValue = line.debit.trim() === "" ? 0 : Number(line.debit);
+        const creditValue = line.credit.trim() === "" ? 0 : Number(line.credit);
+
+        if (line.debit.trim() !== "" && Number.isNaN(debitValue)) {
+            errors.debit = "Enter a valid number.";
+        }
+
+        if (line.credit.trim() !== "" && Number.isNaN(creditValue)) {
+            errors.credit = "Enter a valid number.";
+        }
+
+        if (
+            !errors.debit &&
+            !errors.credit &&
+            line.debit.trim() !== "" &&
+            line.credit.trim() !== ""
+        ) {
+            errors.amount = "Use either debit or credit, not both.";
+        }
+
+        if (
+            !errors.debit &&
+            !errors.credit &&
+            debitValue <= 0 &&
+            creditValue <= 0
+        ) {
+            errors.amount = "Enter a debit or credit amount.";
+        }
+
+        if (!errors.debit && !errors.credit && !errors.amount) {
+            hasAmount = true;
+            totalDebit += debitValue;
+            totalCredit += creditValue;
+        }
+    });
+
+    return { totalDebit, totalCredit, hasAmount, lineErrors };
+};
 
 const validateEntryForm = (
     form: JournalEntryForm
@@ -199,53 +260,10 @@ const validateEntryForm = (
         errors.reference = "Reference is required.";
     }
 
-    let totalDebit = 0;
-    let totalCredit = 0;
-    let hasAmount = false;
+    const { totalDebit, totalCredit, hasAmount, lineErrors } =
+        summarizeJournalLines(form.lines);
 
-    form.lines.forEach((line, index) => {
-        const lineErrors: JournalLineError = {};
-        if (!line.account.trim()) {
-            lineErrors.account = "Account is required.";
-        }
-
-        const debitValue = line.debit.trim() === "" ? 0 : Number(line.debit);
-        const creditValue = line.credit.trim() === "" ? 0 : Number(line.credit);
-
-        if (line.debit.trim() !== "" && Number.isNaN(debitValue)) {
-            lineErrors.debit = "Enter a valid number.";
-        }
-
-        if (line.credit.trim() !== "" && Number.isNaN(creditValue)) {
-            lineErrors.credit = "Enter a valid number.";
-        }
-
-        if (
-            !lineErrors.debit &&
-            !lineErrors.credit &&
-            line.debit.trim() !== "" &&
-            line.credit.trim() !== ""
-        ) {
-            lineErrors.amount = "Use either debit or credit, not both.";
-        }
-
-        if (
-            !lineErrors.debit &&
-            !lineErrors.credit &&
-            debitValue <= 0 &&
-            creditValue <= 0
-        ) {
-            lineErrors.amount = "Enter a debit or credit amount.";
-        }
-
-        if (!lineErrors.debit && !lineErrors.credit && !lineErrors.amount) {
-            hasAmount = true;
-            totalDebit += debitValue;
-            totalCredit += creditValue;
-        }
-
-        errors.lines[index] = lineErrors;
-    });
+    errors.lines = lineErrors;
 
     if (!hasAmount) {
         errors.form = "Add at least one journal line with an amount.";
@@ -286,6 +304,33 @@ export default function JournalEntriesPage() {
     const [formErrors, setFormErrors] = useState<JournalEntryErrors>(
         createDefaultErrors(1)
     );
+
+    const currencyFormatter = useMemo(
+        () =>
+            new Intl.NumberFormat("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }),
+        []
+    );
+
+    const lineSummary = useMemo(
+        () => summarizeJournalLines(entryForm.lines),
+        [entryForm.lines]
+    );
+
+    const totalDebit = lineSummary.totalDebit;
+    const totalCredit = lineSummary.totalCredit;
+    const hasAmounts = lineSummary.hasAmount;
+    const isBalanced = hasAmounts && Math.abs(totalDebit - totalCredit) <= 0.01;
+
+    const balanceStatusLabel = isBalanced
+        ? "Balanced"
+        : "Out of Balance";
+
+    const balanceStatusClass = isBalanced
+        ? "inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800"
+        : "inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800";
 
     const resetFormState = () => {
         const defaultForm = createDefaultEntryForm();
@@ -404,6 +449,56 @@ export default function JournalEntriesPage() {
         }));
     };
 
+    const insertJournalLine = (index: number) => {
+        setEntryForm((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, createEmptyLine());
+
+            return {
+                ...current,
+                lines: updatedLines,
+            };
+        });
+
+        setFormErrors((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, {});
+
+            return {
+                ...current,
+                lines: updatedLines,
+                form: undefined,
+            };
+        });
+    };
+
+    const duplicateJournalLine = (index: number) => {
+        setEntryForm((current) => {
+            const updatedLines = [...current.lines];
+            const lineToDuplicate = current.lines[index];
+
+            updatedLines.splice(index + 1, 0, {
+                ...lineToDuplicate,
+            });
+
+            return {
+                ...current,
+                lines: updatedLines,
+            };
+        });
+
+        setFormErrors((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, {});
+
+            return {
+                ...current,
+                lines: updatedLines,
+                form: undefined,
+            };
+        });
+    };
+
     const removeJournalLine = (index: number) => {
         setEntryForm((current) => {
             if (current.lines.length === 1) {
@@ -435,6 +530,10 @@ export default function JournalEntriesPage() {
                 form: undefined,
             };
         });
+    };
+
+    const handlePasteFromExcel = () => {
+        window.alert("Paste from Excel coming soon.");
     };
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -938,202 +1037,308 @@ export default function JournalEntriesPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                 <h3 className="text-sm font-semibold text-gray-900">
                                                     Journal Lines
                                                 </h3>
-                                                <button
-                                                    type="button"
-                                                    onClick={addJournalLine}
-                                                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                >
-                                                    Add line
-                                                </button>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={addJournalLine}
+                                                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    >
+                                                        <PlusIcon
+                                                            aria-hidden="true"
+                                                            className="size-4"
+                                                        />
+                                                        <span>+ Add Line</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePasteFromExcel}
+                                                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    >
+                                                        Paste from Excel
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="space-y-3">
-                                                {entryForm.lines.map(
-                                                    (line, index) => {
-                                                        const lineErrors =
-                                                            formErrors.lines[
-                                                                index
-                                                            ] || {};
-
-                                                        return (
-                                                            <div
-                                                                key={`journal-line-${index}`}
-                                                                className="rounded-lg border border-gray-200 p-4"
+                                            <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
                                                             >
-                                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                                                    <div className="lg:col-span-1">
-                                                                        <label
-                                                                            htmlFor={`line-account-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Account
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id={`line-account-${index}`}
-                                                                            name={`line-account-${index}`}
-                                                                            value={
-                                                                                line.account
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "account",
+                                                                Account
+                                                            </th>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                                            >
+                                                                Description
+                                                            </th>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                                            >
+                                                                Debit
+                                                            </th>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                                            >
+                                                                Credit
+                                                            </th>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                                            >
+                                                                Cost Center
+                                                            </th>
+                                                            <th
+                                                                scope="col"
+                                                                className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                                            >
+                                                                Actions
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-200 bg-white">
+                                                        {entryForm.lines.map((line, index) => {
+                                                            const lineErrors =
+                                                                formErrors
+                                                                    .lines[index] || {};
+                                                            const canDelete =
+                                                                entryForm.lines
+                                                                    .length > 1;
+
+                                                            return (
+                                                                <tr
+                                                                    key={`journal-line-${index}`}
+                                                                >
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`line-account-${index}`}
+                                                                                name={`line-account-${index}`}
+                                                                                value={
+                                                                                    line.account
+                                                                                }
+                                                                                onChange={(
                                                                                     event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            placeholder="Account name or number"
-                                                                        />
-                                                                        {lineErrors.account ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
+                                                                                ) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "account",
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                placeholder="Account name or number"
+                                                                            />
+                                                                            {lineErrors.account ? (
+                                                                                <p className="text-xs text-red-600">
+                                                                                    {
+                                                                                        lineErrors.account
+                                                                                    }
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`line-description-${index}`}
+                                                                                name={`line-description-${index}`}
+                                                                                value={
+                                                                                    line.description
+                                                                                }
+                                                                                onChange={(
+                                                                                    event
+                                                                                ) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "description",
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                placeholder="Describe the journal line"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <input
+                                                                                type="number"
+                                                                                id={`line-debit-${index}`}
+                                                                                name={`line-debit-${index}`}
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                                value={
+                                                                                    line.debit
+                                                                                }
+                                                                                onChange={(
+                                                                                    event
+                                                                                ) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "debit",
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-right text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                            />
+                                                                            {lineErrors.debit ? (
+                                                                                <p className="text-xs text-red-600">
+                                                                                    {
+                                                                                        lineErrors.debit
+                                                                                    }
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <input
+                                                                                type="number"
+                                                                                id={`line-credit-${index}`}
+                                                                                name={`line-credit-${index}`}
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                                value={
+                                                                                    line.credit
+                                                                                }
+                                                                                onChange={(
+                                                                                    event
+                                                                                ) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "credit",
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-right text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                            />
+                                                                            {lineErrors.credit ? (
+                                                                                <p className="text-xs text-red-600">
+                                                                                    {
+                                                                                        lineErrors.credit
+                                                                                    }
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`line-cost-center-${index}`}
+                                                                                name={`line-cost-center-${index}`}
+                                                                                value={
+                                                                                    line.costCenter
+                                                                                }
+                                                                                onChange={(
+                                                                                    event
+                                                                                ) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "costCenter",
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                placeholder="Optional"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="align-top px-3 py-3">
+                                                                        <div className="flex flex-wrap justify-end gap-2 text-sm">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    insertJournalLine(
+                                                                                        index
+                                                                                    )
+                                                                                }
+                                                                                className="text-indigo-600 hover:text-indigo-500"
+                                                                            >
+                                                                                Insert
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    duplicateJournalLine(
+                                                                                        index
+                                                                                    )
+                                                                                }
+                                                                                className="text-indigo-600 hover:text-indigo-500"
+                                                                            >
+                                                                                Duplicate
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    removeJournalLine(
+                                                                                        index
+                                                                                    )
+                                                                                }
+                                                                                className="text-red-600 hover:text-red-500 disabled:cursor-not-allowed disabled:text-gray-300"
+                                                                                disabled={!canDelete}
+                                                                            >
+                                                                                Delete
+                                                                            </button>
+                                                                        </div>
+                                                                        {lineErrors.amount ? (
+                                                                            <p className="mt-2 text-xs text-red-600">
                                                                                 {
-                                                                                    lineErrors.account
+                                                                                    lineErrors.amount
                                                                                 }
                                                                             </p>
                                                                         ) : null}
-                                                                    </div>
-                                                                    <div>
-                                                                        <label
-                                                                            htmlFor={`line-debit-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Debit
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            id={`line-debit-${index}`}
-                                                                            name={`line-debit-${index}`}
-                                                                            min="0"
-                                                                            step="0.01"
-                                                                            value={
-                                                                                line.debit
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "debit",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                        />
-                                                                        {lineErrors.debit ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
-                                                                                {
-                                                                                    lineErrors.debit
-                                                                                }
-                                                                            </p>
-                                                                        ) : null}
-                                                                    </div>
-                                                                    <div>
-                                                                        <label
-                                                                            htmlFor={`line-credit-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Credit
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            id={`line-credit-${index}`}
-                                                                            name={`line-credit-${index}`}
-                                                                            min="0"
-                                                                            step="0.01"
-                                                                            value={
-                                                                                line.credit
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "credit",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                        />
-                                                                        {lineErrors.credit ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
-                                                                                {
-                                                                                    lineErrors.credit
-                                                                                }
-                                                                            </p>
-                                                                        ) : null}
-                                                                    </div>
-                                                                    <div className="lg:col-span-1">
-                                                                        <label
-                                                                            htmlFor={`line-memo-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Line
-                                                                            Memo
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id={`line-memo-${index}`}
-                                                                            name={`line-memo-${index}`}
-                                                                            value={
-                                                                                line.memo
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "memo",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            placeholder="Optional memo"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                {lineErrors.amount ? (
-                                                                    <p className="mt-3 text-sm text-red-600">
-                                                                        {
-                                                                            lineErrors.amount
-                                                                        }
-                                                                    </p>
-                                                                ) : null}
-                                                                {entryForm.lines
-                                                                    .length >
-                                                                1 ? (
-                                                                    <div className="mt-4 flex justify-end">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                removeJournalLine(
-                                                                                    index
-                                                                                )
-                                                                            }
-                                                                            className="text-sm font-medium text-red-600 hover:text-red-500"
-                                                                        >
-                                                                            Remove
-                                                                            line
-                                                                        </button>
-                                                                    </div>
-                                                                ) : null}
-                                                            </div>
-                                                        );
-                                                    }
-                                                )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                    <tfoot className="bg-gray-50">
+                                                        <tr>
+                                                            <td
+                                                                className="px-3 py-3 text-right text-sm font-semibold text-gray-700"
+                                                                colSpan={2}
+                                                            >
+                                                                Totals
+                                                            </td>
+                                                            <td className="px-3 py-3 text-right text-sm font-semibold text-gray-900">
+                                                                {currencyFormatter.format(totalDebit)}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-right text-sm font-semibold text-gray-900">
+                                                                {currencyFormatter.format(totalCredit)}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-left">
+                                                                <span
+                                                                    className={balanceStatusClass}
+                                                                >
+                                                                    {balanceStatusLabel}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-3" />
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-end gap-3 pt-4">
