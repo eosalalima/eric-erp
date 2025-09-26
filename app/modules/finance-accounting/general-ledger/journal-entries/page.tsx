@@ -106,6 +106,7 @@ export const ledgerOptions: Array<{ label: string; value: string }> = [
 type JournalLineForm = {
     account: string;
     description: string;
+    memo: string;
     debit: string;
     credit: string;
     costCenter: string;
@@ -149,6 +150,7 @@ type JournalEntryErrors = {
 const createEmptyLine = (): JournalLineForm => ({
     account: "",
     description: "",
+    memo: "",
     debit: "",
     credit: "",
     costCenter: "",
