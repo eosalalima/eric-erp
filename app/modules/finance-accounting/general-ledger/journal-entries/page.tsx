@@ -99,20 +99,20 @@ const statusOptions: Array<{ label: string; value: StatusFilter }> = [
 
 type JournalLineForm = {
     account: string;
+    description: string;
     debit: string;
     credit: string;
-    memo: string;
+    costCenter: string;
 };
 
 type JournalEntryForm = {
-    ledger: string;
-    period: string;
     entryDate: string;
-    postingDate: string;
+    period: string;
     currency: string;
-    status: JournalEntry["status"];
-    reference: string;
+    exchangeRate: string;
+    referenceNumber: string;
     memo: string;
+    autoReverse: boolean;
     lines: JournalLineForm[];
 };
 
@@ -124,13 +124,11 @@ type JournalLineError = {
 };
 
 type JournalEntryErrors = {
-    ledger?: string;
-    period?: string;
     entryDate?: string;
-    postingDate?: string;
+    period?: string;
     currency?: string;
-    status?: string;
-    reference?: string;
+    exchangeRate?: string;
+    referenceNumber?: string;
     memo?: string;
     form?: string;
     lines: JournalLineError[];
@@ -138,26 +136,85 @@ type JournalEntryErrors = {
 
 const createEmptyLine = (): JournalLineForm => ({
     account: "",
+    description: "",
     debit: "",
     credit: "",
-    memo: "",
+    costCenter: "",
 });
 
 const createDefaultEntryForm = (): JournalEntryForm => ({
-    ledger: "",
-    period: "",
     entryDate: "",
-    postingDate: "",
+    period: "",
     currency: "USD",
-    status: "Draft",
-    reference: "",
+    exchangeRate: "1.00",
+    referenceNumber: "",
     memo: "",
+    autoReverse: false,
     lines: [createEmptyLine()],
 });
 
 const createDefaultErrors = (lineCount: number): JournalEntryErrors => ({
     lines: Array.from({ length: lineCount }, () => ({} as JournalLineError)),
 });
+
+const summarizeJournalLines = (
+    lines: JournalLineForm[]
+): {
+    totalDebit: number;
+    totalCredit: number;
+    hasAmount: boolean;
+    lineErrors: JournalLineError[];
+} => {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let hasAmount = false;
+    const lineErrors = lines.map(() => ({} as JournalLineError));
+
+    lines.forEach((line, index) => {
+        const errors = lineErrors[index];
+
+        if (!line.account.trim()) {
+            errors.account = "Account is required.";
+        }
+
+        const debitValue = line.debit.trim() === "" ? 0 : Number(line.debit);
+        const creditValue = line.credit.trim() === "" ? 0 : Number(line.credit);
+
+        if (line.debit.trim() !== "" && Number.isNaN(debitValue)) {
+            errors.debit = "Enter a valid number.";
+        }
+
+        if (line.credit.trim() !== "" && Number.isNaN(creditValue)) {
+            errors.credit = "Enter a valid number.";
+        }
+
+        if (
+            !errors.debit &&
+            !errors.credit &&
+            line.debit.trim() !== "" &&
+            line.credit.trim() !== ""
+        ) {
+            errors.amount = "Use either debit or credit, not both.";
+        }
+
+        if (
+            !errors.debit &&
+            !errors.credit &&
+            debitValue <= 0 &&
+            creditValue <= 0
+        ) {
+            errors.amount = "Enter a debit or credit amount.";
+        }
+
+        if (!errors.debit && !errors.credit && !errors.amount) {
+            hasAmount = true;
+            totalDebit += debitValue;
+            totalCredit += creditValue;
+        }
+    });
+
+    return { totalDebit, totalCredit, hasAmount, lineErrors };
+};
 
 const validateEntryForm = (
     form: JournalEntryForm
@@ -171,10 +228,6 @@ const validateEntryForm = (
         ...createDefaultErrors(form.lines.length),
     };
 
-    if (!form.ledger.trim()) {
-        errors.ledger = "Ledger is required.";
-    }
-
     if (!form.period.trim()) {
         errors.period = "Period is required.";
     }
@@ -183,69 +236,27 @@ const validateEntryForm = (
         errors.entryDate = "Entry date is required.";
     }
 
-    if (!form.postingDate.trim()) {
-        errors.postingDate = "Posting date is required.";
-    }
-
     if (!form.currency.trim()) {
         errors.currency = "Currency is required.";
     }
 
-    if (!form.status) {
-        errors.status = "Status is required.";
+    if (!form.exchangeRate.trim()) {
+        errors.exchangeRate = "Exchange rate is required.";
+    } else {
+        const exchangeRateValue = Number(form.exchangeRate);
+        if (Number.isNaN(exchangeRateValue) || exchangeRateValue <= 0) {
+            errors.exchangeRate = "Enter a valid exchange rate.";
+        }
     }
 
-    if (!form.reference.trim()) {
-        errors.reference = "Reference is required.";
+    if (!form.referenceNumber.trim()) {
+        errors.referenceNumber = "Reference number is required.";
     }
 
-    let totalDebit = 0;
-    let totalCredit = 0;
-    let hasAmount = false;
+    const { totalDebit, totalCredit, hasAmount, lineErrors } =
+        summarizeJournalLines(form.lines);
 
-    form.lines.forEach((line, index) => {
-        const lineErrors: JournalLineError = {};
-        if (!line.account.trim()) {
-            lineErrors.account = "Account is required.";
-        }
-
-        const debitValue = line.debit.trim() === "" ? 0 : Number(line.debit);
-        const creditValue = line.credit.trim() === "" ? 0 : Number(line.credit);
-
-        if (line.debit.trim() !== "" && Number.isNaN(debitValue)) {
-            lineErrors.debit = "Enter a valid number.";
-        }
-
-        if (line.credit.trim() !== "" && Number.isNaN(creditValue)) {
-            lineErrors.credit = "Enter a valid number.";
-        }
-
-        if (
-            !lineErrors.debit &&
-            !lineErrors.credit &&
-            line.debit.trim() !== "" &&
-            line.credit.trim() !== ""
-        ) {
-            lineErrors.amount = "Use either debit or credit, not both.";
-        }
-
-        if (
-            !lineErrors.debit &&
-            !lineErrors.credit &&
-            debitValue <= 0 &&
-            creditValue <= 0
-        ) {
-            lineErrors.amount = "Enter a debit or credit amount.";
-        }
-
-        if (!lineErrors.debit && !lineErrors.credit && !lineErrors.amount) {
-            hasAmount = true;
-            totalDebit += debitValue;
-            totalCredit += creditValue;
-        }
-
-        errors.lines[index] = lineErrors;
-    });
+    errors.lines = lineErrors;
 
     if (!hasAmount) {
         errors.form = "Add at least one journal line with an amount.";
@@ -390,7 +401,7 @@ export default function JournalEntriesPage() {
     }, [entries, searchQuery, statusFilter]);
 
     const handleEntryFieldChange =
-        (field: keyof Omit<JournalEntryForm, "lines">) =>
+        (field: keyof Omit<JournalEntryForm, "lines" | "autoReverse">) =>
         (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
             const value = event.target.value;
             setEntryForm((current) => ({
@@ -413,6 +424,20 @@ export default function JournalEntriesPage() {
         setFormErrors((current) => ({
             ...current,
             memo: undefined,
+            form: undefined,
+        }));
+    };
+
+    const handleAutoReverseChange = (
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
+        const checked = event.target.checked;
+        setEntryForm((current) => ({
+            ...current,
+            autoReverse: checked,
+        }));
+        setFormErrors((current) => ({
+            ...current,
             form: undefined,
         }));
     };
@@ -473,6 +498,56 @@ export default function JournalEntriesPage() {
         }));
     };
 
+    const insertJournalLine = (index: number) => {
+        setEntryForm((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, createEmptyLine());
+
+            return {
+                ...current,
+                lines: updatedLines,
+            };
+        });
+
+        setFormErrors((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, {});
+
+            return {
+                ...current,
+                lines: updatedLines,
+                form: undefined,
+            };
+        });
+    };
+
+    const duplicateJournalLine = (index: number) => {
+        setEntryForm((current) => {
+            const updatedLines = [...current.lines];
+            const lineToDuplicate = current.lines[index];
+
+            updatedLines.splice(index + 1, 0, {
+                ...lineToDuplicate,
+            });
+
+            return {
+                ...current,
+                lines: updatedLines,
+            };
+        });
+
+        setFormErrors((current) => {
+            const updatedLines = [...current.lines];
+            updatedLines.splice(index + 1, 0, {});
+
+            return {
+                ...current,
+                lines: updatedLines,
+                form: undefined,
+            };
+        });
+    };
+
     const removeJournalLine = (index: number) => {
         setEntryForm((current) => {
             if (current.lines.length === 1) {
@@ -506,6 +581,10 @@ export default function JournalEntriesPage() {
         });
     };
 
+    const handlePasteFromExcel = () => {
+        window.alert("Paste from Excel coming soon.");
+    };
+
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -516,10 +595,12 @@ export default function JournalEntriesPage() {
             return;
         }
 
-        const entryNumber = entryForm.reference.trim().toUpperCase();
+        const referenceNumber = entryForm.referenceNumber
+            .trim()
+            .toUpperCase();
         const memo = entryForm.memo.trim();
         const description =
-            memo || entryForm.reference.trim() || "New journal entry";
+            memo || entryForm.referenceNumber.trim() || "New journal entry";
         const today = new Date();
         const formattedToday = today.toISOString().slice(0, 10);
         const totalAmount = Number(validation.totalDebit.toFixed(2));
@@ -527,25 +608,32 @@ export default function JournalEntriesPage() {
         const newEntry: JournalEntry = {
             id: `je-${Date.now()}`,
             entryNumber:
-                entryNumber || `JE-${today.getFullYear()}-${Date.now()}`,
+                referenceNumber || `JE-${today.getFullYear()}-${Date.now()}`,
             date: entryForm.entryDate,
             description,
             amount: totalAmount,
-            status: entryForm.status,
+            status: "Draft",
             createdBy: "Current User",
-            lastUpdated: entryForm.postingDate || formattedToday,
+            lastUpdated: entryForm.entryDate || formattedToday,
         };
 
         setEntries((current) => [newEntry, ...current]);
         closeModal();
     };
 
+    const formId = "journal-entry-form";
+
+    const handleSubmitForApproval = () => {
+        // Placeholder for future implementation of the submit workflow
+        // Intentionally left blank to avoid breaking the modal until logic is added
+    };
+
+    const handlePostEntry = () => {
+        // Placeholder for future implementation of the posting workflow
+        // Intentionally left blank to avoid breaking the modal until logic is added
+    };
+
     const currencyOptions = ["USD", "EUR", "GBP", "JPY"];
-    const ledgerOptions = [
-        { label: "General Ledger", value: "general" },
-        { label: "Sales Ledger", value: "sales" },
-        { label: "Purchases Ledger", value: "purchases" },
-    ];
     const periodOptions = [
         { label: "January 2024", value: "2024-01" },
         { label: "February 2024", value: "2024-02" },
@@ -679,14 +767,66 @@ export default function JournalEntriesPage() {
                                             onClick={closeModal}
                                             className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         >
-                                            <span className="sr-only">
-                                                Close
-                                            </span>
-                                            <XMarkIcon
-                                                aria-hidden="true"
-                                                className="size-5"
-                                            />
-                                        </button>
+                                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                                                <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-600/20">
+                                                    Journal Entry
+                                                </span>
+                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-300">
+                                                    Draft
+                                                </span>
+                                                <span className="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/10">
+                                                    JE No: Auto
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium text-gray-700">
+                                                        Date
+                                                    </span>
+                                                    <span>
+                                                        {entryForm.entryDate || "Not set"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </DialogTitle>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="submit"
+                                                    form={formId}
+                                                    className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 hover:bg-indigo-500"
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSubmitForApproval}
+                                                    className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                                >
+                                                    Submit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handlePostEntry}
+                                                    className="inline-flex items-center rounded-md bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-inset ring-rose-200 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
+                                                >
+                                                    Post
+                                                </button>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={closeModal}
+                                                className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <span className="sr-only">
+                                                    Close
+                                                </span>
+                                                <XMarkIcon
+                                                    aria-hidden="true"
+                                                    className="size-5"
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
                                     <form className="mt-6" onSubmit={handleSubmit}>
                                         {formErrors.form ? (
@@ -1005,8 +1145,7 @@ export default function JournalEntriesPage() {
                                                                                 className="block text-sm font-medium text-gray-700"
                                                                             >
                                                                                 Credit
-                                                                            </label>
-                                                                            <input
+                                                                            </label>                                                                            <input
                                                                                 type="number"
                                                                                 id={`line-credit-${index}`}
                                                                                 name={`line-credit-${index}`}
