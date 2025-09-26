@@ -106,14 +106,13 @@ type JournalLineForm = {
 };
 
 type JournalEntryForm = {
-    ledger: string;
-    period: string;
     entryDate: string;
-    postingDate: string;
+    period: string;
     currency: string;
-    status: JournalEntry["status"];
-    reference: string;
+    exchangeRate: string;
+    referenceNumber: string;
     memo: string;
+    autoReverse: boolean;
     lines: JournalLineForm[];
 };
 
@@ -125,13 +124,11 @@ type JournalLineError = {
 };
 
 type JournalEntryErrors = {
-    ledger?: string;
-    period?: string;
     entryDate?: string;
-    postingDate?: string;
+    period?: string;
     currency?: string;
-    status?: string;
-    reference?: string;
+    exchangeRate?: string;
+    referenceNumber?: string;
     memo?: string;
     form?: string;
     lines: JournalLineError[];
@@ -146,14 +143,13 @@ const createEmptyLine = (): JournalLineForm => ({
 });
 
 const createDefaultEntryForm = (): JournalEntryForm => ({
-    ledger: "",
-    period: "",
     entryDate: "",
-    postingDate: "",
+    period: "",
     currency: "USD",
-    status: "Draft",
-    reference: "",
+    exchangeRate: "1.00",
+    referenceNumber: "",
     memo: "",
+    autoReverse: false,
     lines: [createEmptyLine()],
 });
 
@@ -232,10 +228,6 @@ const validateEntryForm = (
         ...createDefaultErrors(form.lines.length),
     };
 
-    if (!form.ledger.trim()) {
-        errors.ledger = "Ledger is required.";
-    }
-
     if (!form.period.trim()) {
         errors.period = "Period is required.";
     }
@@ -244,20 +236,21 @@ const validateEntryForm = (
         errors.entryDate = "Entry date is required.";
     }
 
-    if (!form.postingDate.trim()) {
-        errors.postingDate = "Posting date is required.";
-    }
-
     if (!form.currency.trim()) {
         errors.currency = "Currency is required.";
     }
 
-    if (!form.status) {
-        errors.status = "Status is required.";
+    if (!form.exchangeRate.trim()) {
+        errors.exchangeRate = "Exchange rate is required.";
+    } else {
+        const exchangeRateValue = Number(form.exchangeRate);
+        if (Number.isNaN(exchangeRateValue) || exchangeRateValue <= 0) {
+            errors.exchangeRate = "Enter a valid exchange rate.";
+        }
     }
 
-    if (!form.reference.trim()) {
-        errors.reference = "Reference is required.";
+    if (!form.referenceNumber.trim()) {
+        errors.referenceNumber = "Reference number is required.";
     }
 
     const { totalDebit, totalCredit, hasAmount, lineErrors } =
@@ -366,7 +359,7 @@ export default function JournalEntriesPage() {
     }, [entries, searchQuery, statusFilter]);
 
     const handleEntryFieldChange =
-        (field: keyof Omit<JournalEntryForm, "lines">) =>
+        (field: keyof Omit<JournalEntryForm, "lines" | "autoReverse">) =>
         (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
             const value = event.target.value;
             setEntryForm((current) => ({
@@ -389,6 +382,20 @@ export default function JournalEntriesPage() {
         setFormErrors((current) => ({
             ...current,
             memo: undefined,
+            form: undefined,
+        }));
+    };
+
+    const handleAutoReverseChange = (
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
+        const checked = event.target.checked;
+        setEntryForm((current) => ({
+            ...current,
+            autoReverse: checked,
+        }));
+        setFormErrors((current) => ({
+            ...current,
             form: undefined,
         }));
     };
@@ -546,10 +553,12 @@ export default function JournalEntriesPage() {
             return;
         }
 
-        const entryNumber = entryForm.reference.trim().toUpperCase();
+        const referenceNumber = entryForm.referenceNumber
+            .trim()
+            .toUpperCase();
         const memo = entryForm.memo.trim();
         const description =
-            memo || entryForm.reference.trim() || "New journal entry";
+            memo || entryForm.referenceNumber.trim() || "New journal entry";
         const today = new Date();
         const formattedToday = today.toISOString().slice(0, 10);
         const totalAmount = Number(validation.totalDebit.toFixed(2));
@@ -557,13 +566,13 @@ export default function JournalEntriesPage() {
         const newEntry: JournalEntry = {
             id: `je-${Date.now()}`,
             entryNumber:
-                entryNumber || `JE-${today.getFullYear()}-${Date.now()}`,
+                referenceNumber || `JE-${today.getFullYear()}-${Date.now()}`,
             date: entryForm.entryDate,
             description,
             amount: totalAmount,
-            status: entryForm.status,
+            status: "Draft",
             createdBy: "Current User",
-            lastUpdated: entryForm.postingDate || formattedToday,
+            lastUpdated: entryForm.entryDate || formattedToday,
         };
 
         setEntries((current) => [newEntry, ...current]);
@@ -583,11 +592,6 @@ export default function JournalEntriesPage() {
     };
 
     const currencyOptions = ["USD", "EUR", "GBP", "JPY"];
-    const ledgerOptions = [
-        { label: "General Ledger", value: "general" },
-        { label: "Sales Ledger", value: "sales" },
-        { label: "Purchases Ledger", value: "purchases" },
-    ];
     const periodOptions = [
         { label: "January 2024", value: "2024-01" },
         { label: "February 2024", value: "2024-02" },
@@ -788,44 +792,27 @@ export default function JournalEntriesPage() {
                                                 {formErrors.form}
                                             </div>
                                         ) : null}
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                             <div>
                                                 <label
-                                                    htmlFor="ledger"
+                                                    htmlFor="entryDate"
                                                     className="block text-sm font-medium text-gray-700"
                                                 >
-                                                    Ledger
+                                                    Date
                                                 </label>
-                                                <select
-                                                    id="ledger"
-                                                    name="ledger"
-                                                    value={entryForm.ledger}
+                                                <input
+                                                    type="date"
+                                                    id="entryDate"
+                                                    name="entryDate"
+                                                    value={entryForm.entryDate}
                                                     onChange={handleEntryFieldChange(
-                                                        "ledger"
+                                                        "entryDate"
                                                     )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a ledger
-                                                    </option>
-                                                    {ledgerOptions.map(
-                                                        (option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                                {formErrors.ledger ? (
+                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                                {formErrors.entryDate ? (
                                                     <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.ledger}
+                                                        {formErrors.entryDate}
                                                     </p>
                                                 ) : null}
                                             </div>
@@ -843,7 +830,7 @@ export default function JournalEntriesPage() {
                                                     onChange={handleEntryFieldChange(
                                                         "period"
                                                     )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                 >
                                                     <option value="">
                                                         Select a period
@@ -871,54 +858,6 @@ export default function JournalEntriesPage() {
                                             </div>
                                             <div>
                                                 <label
-                                                    htmlFor="entryDate"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Entry Date
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    id="entryDate"
-                                                    name="entryDate"
-                                                    value={entryForm.entryDate}
-                                                    onChange={handleEntryFieldChange(
-                                                        "entryDate"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                />
-                                                {formErrors.entryDate ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.entryDate}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="postingDate"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Posting Date
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    id="postingDate"
-                                                    name="postingDate"
-                                                    value={
-                                                        entryForm.postingDate
-                                                    }
-                                                    onChange={handleEntryFieldChange(
-                                                        "postingDate"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                />
-                                                {formErrors.postingDate ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.postingDate}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
                                                     htmlFor="currency"
                                                     className="block text-sm font-medium text-gray-700"
                                                 >
@@ -931,7 +870,7 @@ export default function JournalEntriesPage() {
                                                     onChange={handleEntryFieldChange(
                                                         "currency"
                                                     )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                 >
                                                     <option value="">
                                                         Select a currency
@@ -953,88 +892,108 @@ export default function JournalEntriesPage() {
                                                     </p>
                                                 ) : null}
                                             </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                             <div>
                                                 <label
-                                                    htmlFor="status"
+                                                    htmlFor="exchangeRate"
                                                     className="block text-sm font-medium text-gray-700"
                                                 >
-                                                    Status
+                                                    Exchange Rate
                                                 </label>
-                                                <select
-                                                    id="status"
-                                                    name="status"
-                                                    value={entryForm.status}
+                                                <input
+                                                    type="number"
+                                                    id="exchangeRate"
+                                                    name="exchangeRate"
+                                                    min="0"
+                                                    step="0.0001"
+                                                    value={entryForm.exchangeRate}
                                                     onChange={handleEntryFieldChange(
-                                                        "status"
+                                                        "exchangeRate"
                                                     )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a status
-                                                    </option>
-                                                    {statusOptions
-                                                        .filter(
-                                                            (option) =>
-                                                                option.value !==
-                                                                "all"
-                                                        )
-                                                        .map((option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                </select>
-                                                {formErrors.status ? (
+                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                                {formErrors.exchangeRate ? (
                                                     <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.status}
+                                                        {formErrors.exchangeRate}
                                                     </p>
                                                 ) : null}
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Use the spot rate for the journal date.
+                                                </p>
                                             </div>
-                                            <div className="sm:col-span-2">
+                                            <div>
                                                 <label
-                                                    htmlFor="reference"
+                                                    htmlFor="referenceNumber"
                                                     className="block text-sm font-medium text-gray-700"
                                                 >
-                                                    Reference
+                                                    Reference No.
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    id="reference"
-                                                    name="reference"
-                                                    value={entryForm.reference}
+                                                    id="referenceNumber"
+                                                    name="referenceNumber"
+                                                    value={entryForm.referenceNumber}
                                                     onChange={handleEntryFieldChange(
-                                                        "reference"
+                                                        "referenceNumber"
                                                     )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    placeholder="Enter reference or entry number"
+                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    placeholder="Enter journal reference"
                                                 />
-                                                <label
-                                                    htmlFor="memo"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Memo
-                                                </label>
-                                                <textarea
-                                                    id="memo"
-                                                    name="memo"
-                                                    value={entryForm.memo}
-                                                    onChange={handleMemoChange}
-                                                    className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    placeholder="Describe the purpose of the journal entry"
-                                                />
-                                                {formErrors.memo ? (
+                                                {formErrors.referenceNumber ? (
                                                     <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.memo}
+                                                        {formErrors.referenceNumber}
                                                     </p>
                                                 ) : null}
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    This number will appear on listings and exports.
+                                                </p>
                                             </div>
+                                            <div>
+                                                <span className="block text-sm font-medium text-gray-700">
+                                                    Auto Reverse
+                                                </span>
+                                                <div className="mt-2 flex items-start gap-3 rounded-md border border-gray-200 px-3 py-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="autoReverse"
+                                                        name="autoReverse"
+                                                        checked={entryForm.autoReverse}
+                                                        onChange={handleAutoReverseChange}
+                                                        className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <label
+                                                        htmlFor="autoReverse"
+                                                        className="text-sm text-gray-600"
+                                                    >
+                                                        Reverse this entry in the next posting period.
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                htmlFor="memo"
+                                                className="block text-sm font-medium text-gray-700"
+                                            >
+                                                Memo / Description
+                                            </label>
+                                            <textarea
+                                                id="memo"
+                                                name="memo"
+                                                value={entryForm.memo}
+                                                onChange={handleMemoChange}
+                                                className="mt-1 min-h-28 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Describe the purpose of the journal entry"
+                                            />
+                                            {formErrors.memo ? (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {formErrors.memo}
+                                                </p>
+                                            ) : null}
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Provide details for reviewers and approvers.
+                                            </p>
                                         </div>
                                         <div className="space-y-4">
                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
