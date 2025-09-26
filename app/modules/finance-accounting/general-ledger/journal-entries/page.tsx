@@ -106,11 +106,14 @@ type JournalLineForm = {
 };
 
 type JournalEntryForm = {
+    ledger: string;
     entryDate: string;
+    postingDate: string;
     period: string;
     currency: string;
     exchangeRate: string;
     referenceNumber: string;
+    status: "" | JournalEntry["status"];
     memo: string;
     autoReverse: boolean;
     lines: JournalLineForm[];
@@ -124,11 +127,14 @@ type JournalLineError = {
 };
 
 type JournalEntryErrors = {
+    ledger?: string;
     entryDate?: string;
+    postingDate?: string;
     period?: string;
     currency?: string;
     exchangeRate?: string;
     referenceNumber?: string;
+    status?: string;
     memo?: string;
     form?: string;
     lines: JournalLineError[];
@@ -142,19 +148,34 @@ const createEmptyLine = (): JournalLineForm => ({
     costCenter: "",
 });
 
+const createEmptyLineError = (): JournalLineError => ({});
+
 const createDefaultEntryForm = (): JournalEntryForm => ({
+    ledger: "",
     entryDate: "",
+    postingDate: "",
     period: "",
     currency: "USD",
     exchangeRate: "1.00",
     referenceNumber: "",
+    status: "Draft",
     memo: "",
     autoReverse: false,
     lines: [createEmptyLine()],
 });
 
 const createDefaultErrors = (lineCount: number): JournalEntryErrors => ({
-    lines: Array.from({ length: lineCount }, () => ({} as JournalLineError)),
+    ledger: undefined,
+    entryDate: undefined,
+    postingDate: undefined,
+    period: undefined,
+    currency: undefined,
+    exchangeRate: undefined,
+    referenceNumber: undefined,
+    status: undefined,
+    memo: undefined,
+    form: undefined,
+    lines: Array.from({ length: lineCount }, () => createEmptyLineError()),
 });
 
 const summarizeJournalLines = (
@@ -168,7 +189,7 @@ const summarizeJournalLines = (
     let totalDebit = 0;
     let totalCredit = 0;
     let hasAmount = false;
-    const lineErrors = lines.map(() => ({} as JournalLineError));
+    const lineErrors = lines.map(() => createEmptyLineError());
 
     lines.forEach((line, index) => {
         const errors = lineErrors[index];
@@ -224,9 +245,11 @@ const validateEntryForm = (
     totalCredit: number;
     isValid: boolean;
 } => {
-    const errors: JournalEntryErrors = {
-        ...createDefaultErrors(form.lines.length),
-    };
+    const errors = createDefaultErrors(form.lines.length);
+
+    if (!form.ledger.trim()) {
+        errors.ledger = "Ledger is required.";
+    }
 
     if (!form.period.trim()) {
         errors.period = "Period is required.";
@@ -234,6 +257,10 @@ const validateEntryForm = (
 
     if (!form.entryDate.trim()) {
         errors.entryDate = "Entry date is required.";
+    }
+
+    if (!form.postingDate.trim()) {
+        errors.postingDate = "Posting date is required.";
     }
 
     if (!form.currency.trim()) {
@@ -251,6 +278,10 @@ const validateEntryForm = (
 
     if (!form.referenceNumber.trim()) {
         errors.referenceNumber = "Reference number is required.";
+    }
+
+    if (!form.status.trim()) {
+        errors.status = "Status is required.";
     }
 
     const { totalDebit, totalCredit, hasAmount, lineErrors } =
@@ -458,18 +489,21 @@ export default function JournalEntriesPage() {
 
         setFormErrors((current) => {
             const updatedLines = [...current.lines];
-            const existingLineErrors = updatedLines[index] ?? {};
+            const existingLineErrors =
+                updatedLines[index] ?? createEmptyLineError();
             const updatedLineErrors: JournalLineError = {
                 ...existingLineErrors,
                 amount: undefined,
             };
 
-            if (
-                field === "account" ||
-                field === "debit" ||
-                field === "credit"
-            ) {
-                updatedLineErrors[field as keyof JournalLineError] = undefined;
+            switch (field) {
+                case "account":
+                case "debit":
+                case "credit":
+                    updatedLineErrors[field] = undefined;
+                    break;
+                default:
+                    break;
             }
 
             updatedLines[index] = updatedLineErrors;
@@ -593,22 +627,32 @@ export default function JournalEntriesPage() {
 
         const referenceNumber = entryForm.referenceNumber.trim().toUpperCase();
         const memo = entryForm.memo.trim();
-        const description =
+        const entryDate = entryForm.entryDate.trim();
+        const postingDate = entryForm.postingDate.trim();
+        const ledger = entryForm.ledger.trim();
+        const status: JournalEntry["status"] = entryForm.status
+            ? entryForm.status
+            : "Draft";
+        const descriptionBase =
             memo || entryForm.referenceNumber.trim() || "New journal entry";
+        const description = ledger
+            ? `${descriptionBase} — ${ledger}`
+            : descriptionBase;
         const today = new Date();
         const formattedToday = today.toISOString().slice(0, 10);
         const totalAmount = Number(validation.totalDebit.toFixed(2));
+        const displayDate = postingDate || entryDate || formattedToday;
 
         const newEntry: JournalEntry = {
             id: `je-${Date.now()}`,
             entryNumber:
                 referenceNumber || `JE-${today.getFullYear()}-${Date.now()}`,
-            date: entryForm.entryDate,
+            date: displayDate,
             description,
             amount: totalAmount,
-            status: "Draft",
+            status,
             createdBy: "Current User",
-            lastUpdated: entryForm.entryDate || formattedToday,
+            lastUpdated: formattedToday,
         };
 
         setEntries((current) => [newEntry, ...current]);
@@ -1084,20 +1128,20 @@ export default function JournalEntriesPage() {
                                                     </div>
                                                     <div className="sm:col-span-2">
                                                         <label
-                                                            htmlFor="reference"
+                                                            htmlFor="referenceNumber"
                                                             className="block text-sm font-medium text-gray-700"
                                                         >
                                                             Reference
                                                         </label>
                                                         <input
                                                             type="text"
-                                                            id="reference"
-                                                            name="reference"
+                                                            id="referenceNumber"
+                                                            name="referenceNumber"
                                                             value={
-                                                                entryForm.reference
+                                                                entryForm.referenceNumber
                                                             }
                                                             onChange={handleEntryFieldChange(
-                                                                "reference"
+                                                                "referenceNumber"
                                                             )}
                                                             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                             placeholder="Enter reference or entry number"
