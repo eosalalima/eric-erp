@@ -287,6 +287,75 @@ export default function JournalEntriesPage() {
         createDefaultErrors(1)
     );
 
+    const effectiveCurrency =
+        entryForm.currency && entryForm.currency.trim().length === 3
+            ? entryForm.currency
+            : "USD";
+
+    const currencyFormatter = useMemo(
+        () =>
+            new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: effectiveCurrency,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }),
+        [effectiveCurrency]
+    );
+
+    const postingPreview = useMemo(() => {
+        const validation = validateEntryForm(entryForm);
+
+        const lines = entryForm.lines.map((line, index) => {
+            const debitRaw = line.debit.trim();
+            const creditRaw = line.credit.trim();
+            const debitValue =
+                debitRaw === "" ? null : Number.parseFloat(debitRaw);
+            const creditValue =
+                creditRaw === "" ? null : Number.parseFloat(creditRaw);
+
+            const debitInvalid =
+                debitRaw !== "" && Number.isNaN(debitValue ?? NaN);
+            const creditInvalid =
+                creditRaw !== "" && Number.isNaN(creditValue ?? NaN);
+
+            return {
+                id: index,
+                account: line.account.trim(),
+                memo: line.memo.trim(),
+                debitRaw,
+                creditRaw,
+                debitValue:
+                    debitInvalid || debitValue === null ? null : debitValue,
+                creditValue:
+                    creditInvalid || creditValue === null
+                        ? null
+                        : creditValue,
+                debitInvalid,
+                creditInvalid,
+            };
+        });
+
+        const totalDebit = Number(validation.totalDebit.toFixed(2));
+        const totalCredit = Number(validation.totalCredit.toFixed(2));
+        const difference = Number(
+            (validation.totalDebit - validation.totalCredit).toFixed(2)
+        );
+
+        const hasActivity = totalDebit > 0 || totalCredit > 0;
+        const isBalanced = !validation.errors.form && hasActivity;
+
+        return {
+            lines,
+            totalDebit,
+            totalCredit,
+            difference,
+            isBalanced,
+            hasActivity,
+            message: validation.errors.form,
+        };
+    }, [entryForm]);
+
     const resetFormState = () => {
         const defaultForm = createDefaultEntryForm();
         setEntryForm(defaultForm);
@@ -600,7 +669,7 @@ export default function JournalEntriesPage() {
                         />
                         <div className="fixed inset-0 z-10 overflow-y-auto">
                             <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
-                                <DialogPanel className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white p-6 text-left shadow-xl transition-all">
+                                <DialogPanel className="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white p-6 text-left shadow-xl transition-all">
                                     <div className="flex items-start justify-between gap-4">
                                         <DialogTitle className="text-base font-semibold text-gray-900">
                                             New Journal Entry
@@ -619,463 +688,539 @@ export default function JournalEntriesPage() {
                                             />
                                         </button>
                                     </div>
-                                    <form
-                                        className="mt-6 space-y-6"
-                                        onSubmit={handleSubmit}
-                                    >
+                                    <form className="mt-6" onSubmit={handleSubmit}>
                                         {formErrors.form ? (
-                                            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                                            <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
                                                 {formErrors.form}
                                             </div>
                                         ) : null}
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                            <div>
-                                                <label
-                                                    htmlFor="ledger"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Ledger
-                                                </label>
-                                                <select
-                                                    id="ledger"
-                                                    name="ledger"
-                                                    value={entryForm.ledger}
-                                                    onChange={handleEntryFieldChange(
-                                                        "ledger"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a ledger
-                                                    </option>
-                                                    {ledgerOptions.map(
-                                                        (option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
+                                        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                    <div>
+                                                        <label
+                                                            htmlFor="ledger"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Ledger
+                                                        </label>
+                                                        <select
+                                                            id="ledger"
+                                                            name="ledger"
+                                                            value={entryForm.ledger}
+                                                            onChange={handleEntryFieldChange(
+                                                                "ledger"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        >
+                                                            <option value="">
+                                                                Select a ledger
                                                             </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                                {formErrors.ledger ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.ledger}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="period"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Period
-                                                </label>
-                                                <select
-                                                    id="period"
-                                                    name="period"
-                                                    value={entryForm.period}
-                                                    onChange={handleEntryFieldChange(
-                                                        "period"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a period
-                                                    </option>
-                                                    {periodOptions.map(
-                                                        (option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
+                                                            {ledgerOptions.map((option) => (
+                                                                <option
+                                                                    key={option.value}
+                                                                    value={option.value}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {formErrors.ledger ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.ledger}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            htmlFor="period"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Period
+                                                        </label>
+                                                        <select
+                                                            id="period"
+                                                            name="period"
+                                                            value={entryForm.period}
+                                                            onChange={handleEntryFieldChange(
+                                                                "period"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        >
+                                                            <option value="">
+                                                                Select a period
                                                             </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                                {formErrors.period ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.period}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="entryDate"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Entry Date
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    id="entryDate"
-                                                    name="entryDate"
-                                                    value={entryForm.entryDate}
-                                                    onChange={handleEntryFieldChange(
-                                                        "entryDate"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                />
-                                                {formErrors.entryDate ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.entryDate}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="postingDate"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Posting Date
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    id="postingDate"
-                                                    name="postingDate"
-                                                    value={
-                                                        entryForm.postingDate
-                                                    }
-                                                    onChange={handleEntryFieldChange(
-                                                        "postingDate"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                />
-                                                {formErrors.postingDate ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.postingDate}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="currency"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Currency
-                                                </label>
-                                                <select
-                                                    id="currency"
-                                                    name="currency"
-                                                    value={entryForm.currency}
-                                                    onChange={handleEntryFieldChange(
-                                                        "currency"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a currency
-                                                    </option>
-                                                    {currencyOptions.map(
-                                                        (option) => (
-                                                            <option
-                                                                key={option}
-                                                                value={option}
-                                                            >
-                                                                {option}
+                                                            {periodOptions.map((option) => (
+                                                                <option
+                                                                    key={option.value}
+                                                                    value={option.value}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {formErrors.period ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.period}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            htmlFor="entryDate"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Entry Date
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            id="entryDate"
+                                                            name="entryDate"
+                                                            value={entryForm.entryDate}
+                                                            onChange={handleEntryFieldChange(
+                                                                "entryDate"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        />
+                                                        {formErrors.entryDate ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.entryDate}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            htmlFor="postingDate"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Posting Date
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            id="postingDate"
+                                                            name="postingDate"
+                                                            value={entryForm.postingDate}
+                                                            onChange={handleEntryFieldChange(
+                                                                "postingDate"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        />
+                                                        {formErrors.postingDate ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.postingDate}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            htmlFor="currency"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Currency
+                                                        </label>
+                                                        <select
+                                                            id="currency"
+                                                            name="currency"
+                                                            value={entryForm.currency}
+                                                            onChange={handleEntryFieldChange(
+                                                                "currency"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        >
+                                                            <option value="">
+                                                                Select a currency
                                                             </option>
-                                                        )
-                                                    )}
-                                                </select>
-                                                {formErrors.currency ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.currency}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="status"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Status
-                                                </label>
-                                                <select
-                                                    id="status"
-                                                    name="status"
-                                                    value={entryForm.status}
-                                                    onChange={handleEntryFieldChange(
-                                                        "status"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">
-                                                        Select a status
-                                                    </option>
-                                                    {statusOptions
-                                                        .filter(
-                                                            (option) =>
-                                                                option.value !==
-                                                                "all"
-                                                        )
-                                                        .map((option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
+                                                            {currencyOptions.map((option) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {formErrors.currency ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.currency}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            htmlFor="status"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Status
+                                                        </label>
+                                                        <select
+                                                            id="status"
+                                                            name="status"
+                                                            value={entryForm.status}
+                                                            onChange={handleEntryFieldChange(
+                                                                "status"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        >
+                                                            <option value="">
+                                                                Select a status
                                                             </option>
-                                                        ))}
-                                                </select>
-                                                {formErrors.status ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.status}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <div className="sm:col-span-2">
-                                                <label
-                                                    htmlFor="reference"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Reference
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="reference"
-                                                    name="reference"
-                                                    value={entryForm.reference}
-                                                    onChange={handleEntryFieldChange(
-                                                        "reference"
-                                                    )}
-                                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    placeholder="Enter reference or entry number"
-                                                />
-                                                <label
-                                                    htmlFor="memo"
-                                                    className="block text-sm font-medium text-gray-700"
-                                                >
-                                                    Memo
-                                                </label>
-                                                <textarea
-                                                    id="memo"
-                                                    name="memo"
-                                                    value={entryForm.memo}
-                                                    onChange={handleMemoChange}
-                                                    className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    placeholder="Describe the purpose of the journal entry"
-                                                />
-                                                {formErrors.memo ? (
-                                                    <p className="mt-1 text-sm text-red-600">
-                                                        {formErrors.memo}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="text-sm font-semibold text-gray-900">
-                                                    Journal Lines
-                                                </h3>
-                                                <button
-                                                    type="button"
-                                                    onClick={addJournalLine}
-                                                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                >
-                                                    Add line
-                                                </button>
-                                            </div>
-                                            <div className="space-y-3">
-                                                {entryForm.lines.map(
-                                                    (line, index) => {
-                                                        const lineErrors =
-                                                            formErrors.lines[
-                                                                index
-                                                            ] || {};
+                                                            {statusOptions
+                                                                .filter((option) => option.value !== "all")
+                                                                .map((option) => (
+                                                                    <option
+                                                                        key={option.value}
+                                                                        value={option.value}
+                                                                    >
+                                                                        {option.label}
+                                                                    </option>
+                                                                ))}
+                                                        </select>
+                                                        {formErrors.status ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.status}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                    <div className="sm:col-span-2">
+                                                        <label
+                                                            htmlFor="reference"
+                                                            className="block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Reference
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            id="reference"
+                                                            name="reference"
+                                                            value={entryForm.reference}
+                                                            onChange={handleEntryFieldChange(
+                                                                "reference"
+                                                            )}
+                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                            placeholder="Enter reference or entry number"
+                                                        />
+                                                        <label
+                                                            htmlFor="memo"
+                                                            className="mt-4 block text-sm font-medium text-gray-700"
+                                                        >
+                                                            Memo
+                                                        </label>
+                                                        <textarea
+                                                            id="memo"
+                                                            name="memo"
+                                                            value={entryForm.memo}
+                                                            onChange={handleMemoChange}
+                                                            className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                            placeholder="Describe the purpose of the journal entry"
+                                                        />
+                                                        {formErrors.memo ? (
+                                                            <p className="mt-1 text-sm text-red-600">
+                                                                {formErrors.memo}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-sm font-semibold text-gray-900">
+                                                            Journal Lines
+                                                        </h3>
+                                                        <button
+                                                            type="button"
+                                                            onClick={addJournalLine}
+                                                            className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        >
+                                                            <PlusIcon aria-hidden="true" className="size-4 text-gray-500" />
+                                                            Add line
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {entryForm.lines.map((line, index) => {
+                                                            const lineErrors =
+                                                                formErrors.lines[index] || {};
 
-                                                        return (
-                                                            <div
-                                                                key={`journal-line-${index}`}
-                                                                className="rounded-lg border border-gray-200 p-4"
-                                                            >
-                                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                                                    <div className="lg:col-span-1">
-                                                                        <label
-                                                                            htmlFor={`line-account-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Account
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id={`line-account-${index}`}
-                                                                            name={`line-account-${index}`}
-                                                                            value={
-                                                                                line.account
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "account",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            placeholder="Account name or number"
-                                                                        />
-                                                                        {lineErrors.account ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
-                                                                                {
-                                                                                    lineErrors.account
+                                                            return (
+                                                                <div
+                                                                    key={`journal-line-${index}`}
+                                                                    className="rounded-lg border border-gray-200 p-4"
+                                                                >
+                                                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                                                        <div className="lg:col-span-1">
+                                                                            <label
+                                                                                htmlFor={`line-account-${index}`}
+                                                                                className="block text-sm font-medium text-gray-700"
+                                                                            >
+                                                                                Account
+                                                                            </label>
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`line-account-${index}`}
+                                                                                name={`line-account-${index}`}
+                                                                                value={line.account}
+                                                                                onChange={(event) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "account",
+                                                                                        event.target.value
+                                                                                    )
                                                                                 }
-                                                                            </p>
-                                                                        ) : null}
-                                                                    </div>
-                                                                    <div>
-                                                                        <label
-                                                                            htmlFor={`line-debit-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Debit
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            id={`line-debit-${index}`}
-                                                                            name={`line-debit-${index}`}
-                                                                            min="0"
-                                                                            step="0.01"
-                                                                            value={
-                                                                                line.debit
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "debit",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                        />
-                                                                        {lineErrors.debit ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
-                                                                                {
-                                                                                    lineErrors.debit
+                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                placeholder="Account name or number"
+                                                                            />
+                                                                            {lineErrors.account ? (
+                                                                                <p className="mt-1 text-sm text-red-600">
+                                                                                    {lineErrors.account}
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                        <div>
+                                                                            <label
+                                                                                htmlFor={`line-debit-${index}`}
+                                                                                className="block text-sm font-medium text-gray-700"
+                                                                            >
+                                                                                Debit
+                                                                            </label>
+                                                                            <input
+                                                                                type="number"
+                                                                                id={`line-debit-${index}`}
+                                                                                name={`line-debit-${index}`}
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                                value={line.debit}
+                                                                                onChange={(event) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "debit",
+                                                                                        event.target.value
+                                                                                    )
                                                                                 }
-                                                                            </p>
-                                                                        ) : null}
-                                                                    </div>
-                                                                    <div>
-                                                                        <label
-                                                                            htmlFor={`line-credit-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Credit
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            id={`line-credit-${index}`}
-                                                                            name={`line-credit-${index}`}
-                                                                            min="0"
-                                                                            step="0.01"
-                                                                            value={
-                                                                                line.credit
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "credit",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                        />
-                                                                        {lineErrors.credit ? (
-                                                                            <p className="mt-1 text-sm text-red-600">
-                                                                                {
-                                                                                    lineErrors.credit
+                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                            />
+                                                                            {lineErrors.debit ? (
+                                                                                <p className="mt-1 text-sm text-red-600">
+                                                                                    {lineErrors.debit}
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                        <div>
+                                                                            <label
+                                                                                htmlFor={`line-credit-${index}`}
+                                                                                className="block text-sm font-medium text-gray-700"
+                                                                            >
+                                                                                Credit
+                                                                            </label>
+                                                                            <input
+                                                                                type="number"
+                                                                                id={`line-credit-${index}`}
+                                                                                name={`line-credit-${index}`}
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                                value={line.credit}
+                                                                                onChange={(event) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "credit",
+                                                                                        event.target.value
+                                                                                    )
                                                                                 }
-                                                                            </p>
-                                                                        ) : null}
+                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                            />
+                                                                            {lineErrors.credit ? (
+                                                                                <p className="mt-1 text-sm text-red-600">
+                                                                                    {lineErrors.credit}
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                        <div className="lg:col-span-1">
+                                                                            <label
+                                                                                htmlFor={`line-memo-${index}`}
+                                                                                className="block text-sm font-medium text-gray-700"
+                                                                            >
+                                                                                Line Memo
+                                                                            </label>
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`line-memo-${index}`}
+                                                                                name={`line-memo-${index}`}
+                                                                                value={line.memo}
+                                                                                onChange={(event) =>
+                                                                                    handleLineChange(
+                                                                                        index,
+                                                                                        "memo",
+                                                                                        event.target.value
+                                                                                    )
+                                                                                }
+                                                                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                                placeholder="Optional memo"
+                                                                            />
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="lg:col-span-1">
-                                                                        <label
-                                                                            htmlFor={`line-memo-${index}`}
-                                                                            className="block text-sm font-medium text-gray-700"
-                                                                        >
-                                                                            Line
-                                                                            Memo
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id={`line-memo-${index}`}
-                                                                            name={`line-memo-${index}`}
-                                                                            value={
-                                                                                line.memo
-                                                                            }
-                                                                            onChange={(
-                                                                                event
-                                                                            ) =>
-                                                                                handleLineChange(
-                                                                                    index,
-                                                                                    "memo",
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                )
-                                                                            }
-                                                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                            placeholder="Optional memo"
-                                                                        />
-                                                                    </div>
+                                                                    {lineErrors.amount ? (
+                                                                        <p className="mt-3 text-sm text-red-600">
+                                                                            {lineErrors.amount}
+                                                                        </p>
+                                                                    ) : null}
+                                                                    {entryForm.lines.length > 1 ? (
+                                                                        <div className="mt-4 flex justify-end">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    removeJournalLine(index)
+                                                                                }
+                                                                                className="text-sm font-medium text-red-600 hover:text-red-500"
+                                                                            >
+                                                                                Remove line
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : null}
                                                                 </div>
-                                                                {lineErrors.amount ? (
-                                                                    <p className="mt-3 text-sm text-red-600">
-                                                                        {
-                                                                            lineErrors.amount
-                                                                        }
-                                                                    </p>
-                                                                ) : null}
-                                                                {entryForm.lines
-                                                                    .length >
-                                                                1 ? (
-                                                                    <div className="mt-4 flex justify-end">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                removeJournalLine(
-                                                                                    index
-                                                                                )
-                                                                            }
-                                                                            className="text-sm font-medium text-red-600 hover:text-red-500"
-                                                                        >
-                                                                            Remove
-                                                                            line
-                                                                        </button>
-                                                                    </div>
-                                                                ) : null}
-                                                            </div>
-                                                        );
-                                                    }
-                                                )}
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <aside className="space-y-4">
+                                                <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                    <div className="border-b border-slate-200 px-5 py-4">
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <h3 className="text-sm font-semibold text-gray-900">
+                                                                Posting Preview
+                                                            </h3>
+                                                            <span
+                                                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${postingPreview.isBalanced ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"}`}
+                                                            >
+                                                                {postingPreview.isBalanced
+                                                                    ? "Balanced"
+                                                                    : "Imbalanced"}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-1 text-xs text-gray-500">
+                                                            Preview updates as you add accounts and amounts.
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-5 px-5 py-4">
+                                                        <div className="space-y-3">
+                                                            {postingPreview.lines.map((line) => {
+                                                                const hasContent =
+                                                                    line.account ||
+                                                                    line.memo ||
+                                                                    line.debitRaw ||
+                                                                    line.creditRaw;
+
+                                                                return (
+                                                                    <div
+                                                                        key={`preview-line-${line.id}`}
+                                                                        className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+                                                                    >
+                                                                        <div className="min-w-0">
+                                                                            <p className="truncate text-sm font-medium text-gray-900">
+                                                                                {line.account || `Line ${line.id + 1}`}
+                                                                            </p>
+                                                                            {line.memo ? (
+                                                                                <p className="mt-0.5 text-xs text-gray-500">
+                                                                                    {line.memo}
+                                                                                </p>
+                                                                            ) : null}
+                                                                            {!hasContent ? (
+                                                                                <p className="mt-0.5 text-xs text-gray-400">
+                                                                                    Waiting for details
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                        <div className="flex flex-shrink-0 gap-6 text-right">
+                                                                            <div>
+                                                                                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                                                                    Debit
+                                                                                </p>
+                                                                                <p
+                                                                                    className={`text-sm font-semibold ${line.debitInvalid ? "text-red-600" : "text-sky-700"}`}
+                                                                                >
+                                                                                    {line.debitInvalid
+                                                                                        ? "Invalid"
+                                                                                        : line.debitValue !== null
+                                                                                        ? currencyFormatter.format(line.debitValue)
+                                                                                        : "—"}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                                                                    Credit
+                                                                                </p>
+                                                                                <p
+                                                                                    className={`text-sm font-semibold ${line.creditInvalid ? "text-red-600" : "text-indigo-700"}`}
+                                                                                >
+                                                                                    {line.creditInvalid
+                                                                                        ? "Invalid"
+                                                                                        : line.creditValue !== null
+                                                                                        ? currencyFormatter.format(line.creditValue)
+                                                                                        : "—"}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div className="space-y-3 rounded-lg bg-slate-100 px-4 py-3 text-sm">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-gray-600">
+                                                                    Total debit
+                                                                </span>
+                                                                <span className="font-semibold text-sky-700">
+                                                                    {currencyFormatter.format(postingPreview.totalDebit)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-gray-600">
+                                                                    Total credit
+                                                                </span>
+                                                                <span className="font-semibold text-indigo-700">
+                                                                    {currencyFormatter.format(postingPreview.totalCredit)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between border-t border-white/60 pt-2 text-sm">
+                                                                <span className="text-gray-600">
+                                                                    Difference
+                                                                </span>
+                                                                <span
+                                                                    className={`font-semibold ${postingPreview.isBalanced ? "text-emerald-600" : "text-amber-600"}`}
+                                                                >
+                                                                    {currencyFormatter.format(
+                                                                        Math.abs(postingPreview.difference)
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500">
+                                                                {postingPreview.message
+                                                                    ? postingPreview.message
+                                                                    : postingPreview.isBalanced
+                                                                    ? "Debits equal credits. Review header details before posting."
+                                                                    : postingPreview.hasActivity
+                                                                    ? "Totals must balance before the entry can be posted."
+                                                                    : "Add at least one journal line with a debit or credit to begin."}
+                                                            </p>
+                                                        </div>
+                                                        <div className="border-t border-slate-200 pt-4">
+                                                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                                Posting guidelines
+                                                            </p>
+                                                            <ul className="mt-3 space-y-2 text-xs text-gray-600">
+                                                                <li className="flex gap-2">
+                                                                    <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
+                                                                    Use a single debit or credit per line to keep balances clear.
+                                                                </li>
+                                                                <li className="flex gap-2">
+                                                                    <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
+                                                                    Totals must match exactly before you can post the entry.
+                                                                </li>
+                                                                <li className="flex gap-2">
+                                                                    <span className="mt-[6px] size-1.5 rounded-full bg-indigo-400" />
+                                                                    Add memos to document the business purpose for each amount.
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </aside>
                                         </div>
-                                        <div className="flex items-center justify-end gap-3 pt-4">
+                                        <div className="mt-6 flex items-center justify-end gap-3">
                                             <button
                                                 type="button"
                                                 onClick={closeModal}
