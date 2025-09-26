@@ -471,6 +471,18 @@ export default function JournalEntriesPage() {
         closeModal();
     };
 
+    const formId = "journal-entry-form";
+
+    const handleSubmitForApproval = () => {
+        // Placeholder for future implementation of the submit workflow
+        // Intentionally left blank to avoid breaking the modal until logic is added
+    };
+
+    const handlePostEntry = () => {
+        // Placeholder for future implementation of the posting workflow
+        // Intentionally left blank to avoid breaking the modal until logic is added
+    };
+
     const currencyOptions = ["USD", "EUR", "GBP", "JPY"];
     const ledgerOptions = [
         { label: "General Ledger", value: "general" },
@@ -601,25 +613,74 @@ export default function JournalEntriesPage() {
                         <div className="fixed inset-0 z-10 overflow-y-auto">
                             <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
                                 <DialogPanel className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white p-6 text-left shadow-xl transition-all">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <DialogTitle className="text-base font-semibold text-gray-900">
-                                            New Journal Entry
-                                        </DialogTitle>
-                                        <button
-                                            type="button"
-                                            onClick={closeModal}
-                                            className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    <div className="flex flex-wrap items-start justify-between gap-4">
+                                        <DialogTitle
+                                            as="div"
+                                            className="flex min-w-0 flex-1 flex-col gap-2"
                                         >
-                                            <span className="sr-only">
-                                                Close
-                                            </span>
-                                            <XMarkIcon
-                                                aria-hidden="true"
-                                                className="size-5"
-                                            />
-                                        </button>
+                                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                                                <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-600/20">
+                                                    Journal Entry
+                                                </span>
+                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-300">
+                                                    Draft
+                                                </span>
+                                                <span className="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/10">
+                                                    JE No: Auto
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium text-gray-700">
+                                                        Date
+                                                    </span>
+                                                    <span>
+                                                        {entryForm.entryDate || "Not set"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </DialogTitle>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="submit"
+                                                    form={formId}
+                                                    className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 hover:bg-indigo-500"
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSubmitForApproval}
+                                                    className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                                >
+                                                    Submit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handlePostEntry}
+                                                    className="inline-flex items-center rounded-md bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-inset ring-rose-200 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
+                                                >
+                                                    Post
+                                                </button>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={closeModal}
+                                                className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <span className="sr-only">
+                                                    Close
+                                                </span>
+                                                <XMarkIcon
+                                                    aria-hidden="true"
+                                                    className="size-5"
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
                                     <form
+                                        id={formId}
                                         className="mt-6 space-y-6"
                                         onSubmit={handleSubmit}
                                     >
