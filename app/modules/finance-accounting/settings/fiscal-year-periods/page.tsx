@@ -50,7 +50,7 @@ type FiscalYearRecord = {
 
 type FiscalYearPeriodRecord = {
     id: string;
-    period_number: number | null;
+    period_no: number | null;
     start_date: string | null;
     end_date: string | null;
     status: FiscalYearStatus | null;
@@ -483,9 +483,9 @@ export default function FiscalYearPeriodsPage() {
                         ({
                             id: period.id,
                             periodNumber:
-                                period.period_number !== null &&
-                                period.period_number !== undefined
-                                    ? String(period.period_number)
+                                period.period_no !== null &&
+                                period.period_no !== undefined
+                                    ? String(period.period_no)
                                     : "",
                             startDate: toDateInputValue(period.start_date),
                             endDate: toDateInputValue(period.end_date),
@@ -754,7 +754,7 @@ export default function FiscalYearPeriodsPage() {
                 status: formValues.status,
                 periods: periods.map((period) => ({
                     id: period.id,
-                    period_number: Number.parseInt(period.periodNumber, 10),
+                    period_no: Number.parseInt(period.periodNumber, 10),
                     start_date: `${period.startDate}T00:00:00.000Z`,
                     end_date: `${period.endDate}T00:00:00.000Z`,
                     status: period.status,
