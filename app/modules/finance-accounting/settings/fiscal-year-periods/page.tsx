@@ -703,7 +703,7 @@ export default function FiscalYearPeriodsPage() {
                                                         <div className="mt-2">
                                                             {hasLedgerOptions ? (
                                                                 <div
-                                                                    className={`rounded-md bg-white outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    className={`rounded-md bg-white outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                         formErrors.ledgerId
                                                                             ? "outline-red-500"
                                                                             : "outline-gray-300"
@@ -756,7 +756,7 @@ export default function FiscalYearPeriodsPage() {
                                                                 </div>
                                                             ) : (
                                                                 <div
-                                                                    className={`rounded-md bg-white pl-3 outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                         formErrors.ledgerId
                                                                             ? "outline-red-500"
                                                                             : "outline-gray-300"
@@ -802,7 +802,7 @@ export default function FiscalYearPeriodsPage() {
                                                         </label>
                                                         <div className="mt-2">
                                                             <div
-                                                                className={`rounded-md bg-white pl-3 outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                     formErrors.year
                                                                         ? "outline-red-500"
                                                                         : "outline-gray-300"
@@ -849,7 +849,7 @@ export default function FiscalYearPeriodsPage() {
                                                             </label>
                                                             <div className="mt-2">
                                                                 <div
-                                                                    className={`rounded-md bg-white pl-3 outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                         formErrors.startDate
                                                                             ? "outline-red-500"
                                                                             : "outline-gray-300"
@@ -892,7 +892,7 @@ export default function FiscalYearPeriodsPage() {
                                                             </label>
                                                             <div className="mt-2">
                                                                 <div
-                                                                    className={`rounded-md bg-white pl-3 outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                    className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                         formErrors.endDate
                                                                             ? "outline-red-500"
                                                                             : "outline-gray-300"
@@ -937,7 +937,7 @@ export default function FiscalYearPeriodsPage() {
                                                         </label>
                                                         <div className="mt-2">
                                                             <div
-                                                                className={`rounded-md bg-white outline outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                className={`rounded-md bg-white outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                     formErrors.status
                                                                         ? "outline-red-500"
                                                                         : "outline-gray-300"
@@ -1005,7 +1005,7 @@ export default function FiscalYearPeriodsPage() {
                                                         </button>
                                                         <button
                                                             type="submit"
-                                                            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                                                             disabled={
                                                                 isSubmitting ||
                                                                 !isFormValid
