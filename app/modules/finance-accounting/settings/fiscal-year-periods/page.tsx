@@ -264,8 +264,8 @@ function calculatePeriodErrorsForTouched(
         const { errors } = validatePeriod(period);
 
         return Object.fromEntries(
-            Object.entries(errors).filter(([key]) =>
-                touched[key as PeriodFieldKey]
+            Object.entries(errors).filter(
+                ([key]) => touched[key as PeriodFieldKey]
             )
         ) as PeriodValidationErrors;
     });
@@ -290,7 +290,9 @@ export default function FiscalYearPeriodsPage() {
     const [formErrors, setFormErrors] = useState<ValidationErrors>({});
     const [periods, setPeriods] = useState<PeriodFormValue[]>([]);
     const [, setPeriodTouched] = useState<PeriodTouchedState[]>([]);
-    const [periodErrors, setPeriodErrors] = useState<PeriodValidationErrors[]>([]);
+    const [periodErrors, setPeriodErrors] = useState<PeriodValidationErrors[]>(
+        []
+    );
     const [isLoadingPeriods, setIsLoadingPeriods] = useState(false);
     const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(
         null
@@ -476,20 +478,27 @@ export default function FiscalYearPeriodsPage() {
                     return;
                 }
 
-                const derivedPeriods = (data.periods ?? []).map((period) => ({
-                    id: period.id,
-                    periodNumber:
-                        period.period_number !== null && period.period_number !== undefined
-                            ? String(period.period_number)
-                            : "",
-                    startDate: toDateInputValue(period.start_date),
-                    endDate: toDateInputValue(period.end_date),
-                    status:
-                        (period.status?.toUpperCase() as FiscalYearStatus) ?? "OPEN",
-                } satisfies PeriodFormValue));
+                const derivedPeriods = (data.periods ?? []).map(
+                    (period) =>
+                        ({
+                            id: period.id,
+                            periodNumber:
+                                period.period_number !== null &&
+                                period.period_number !== undefined
+                                    ? String(period.period_number)
+                                    : "",
+                            startDate: toDateInputValue(period.start_date),
+                            endDate: toDateInputValue(period.end_date),
+                            status:
+                                (period.status?.toUpperCase() as FiscalYearStatus) ??
+                                "OPEN",
+                        } satisfies PeriodFormValue)
+                );
 
                 setPeriods(derivedPeriods);
-                setPeriodTouched(derivedPeriods.map(() => createEmptyPeriodTouched()));
+                setPeriodTouched(
+                    derivedPeriods.map(() => createEmptyPeriodTouched())
+                );
                 setPeriodErrors(derivedPeriods.map(() => ({})));
             } catch (error) {
                 console.error(error);
@@ -594,7 +603,7 @@ export default function FiscalYearPeriodsPage() {
                 const rawValue = event.target.value;
                 const value =
                     field === "status"
-                        ? ((rawValue.toUpperCase() as FiscalYearStatus) as PeriodFormValue[typeof field])
+                        ? (rawValue.toUpperCase() as FiscalYearStatus as PeriodFormValue[typeof field])
                         : (rawValue as PeriodFormValue[typeof field]);
 
                 setPeriods((previous) => {
@@ -668,7 +677,9 @@ export default function FiscalYearPeriodsPage() {
 
     const handleDeletePeriodLine = useCallback((index: number) => {
         setPeriods((previous) => {
-            const updated = previous.filter((_, periodIndex) => periodIndex !== index);
+            const updated = previous.filter(
+                (_, periodIndex) => periodIndex !== index
+            );
             setPeriodTouched((prevTouched) =>
                 prevTouched.filter((_, touchedIndex) => touchedIndex !== index)
             );
@@ -1319,17 +1330,24 @@ export default function FiscalYearPeriodsPage() {
                                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                             <div>
                                                                 <h3 className="text-sm font-semibold text-gray-900">
-                                                                    Fiscal periods
+                                                                    Fiscal
+                                                                    periods
                                                                 </h3>
                                                                 <p className="text-xs text-gray-500">
-                                                                    Define the individual periods for this fiscal year.
+                                                                    Define the
+                                                                    individual
+                                                                    periods for
+                                                                    this fiscal
+                                                                    year.
                                                                 </p>
                                                             </div>
                                                             <div>
                                                                 <button
                                                                     type="button"
                                                                     className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                    onClick={handleAddPeriodLine}
+                                                                    onClick={
+                                                                        handleAddPeriodLine
+                                                                    }
                                                                     disabled={
                                                                         isSubmitting ||
                                                                         isLoadingPeriods
@@ -1342,11 +1360,14 @@ export default function FiscalYearPeriodsPage() {
 
                                                         {isLoadingPeriods ? (
                                                             <p className="text-sm text-gray-500">
-                                                                Loading periods...
+                                                                Loading
+                                                                periods...
                                                             </p>
-                                                        ) : periods.length === 0 ? (
+                                                        ) : periods.length ===
+                                                          0 ? (
                                                             <p className="text-sm text-gray-500">
-                                                                No periods added yet.
+                                                                No periods added
+                                                                yet.
                                                             </p>
                                                         ) : (
                                                             <div className="overflow-x-auto">
@@ -1357,19 +1378,22 @@ export default function FiscalYearPeriodsPage() {
                                                                                 scope="col"
                                                                                 className="px-3 py-2 text-left font-semibold text-gray-900"
                                                                             >
-                                                                                Period #
+                                                                                Period
+                                                                                #
                                                                             </th>
                                                                             <th
                                                                                 scope="col"
                                                                                 className="px-3 py-2 text-left font-semibold text-gray-900"
                                                                             >
-                                                                                Start date
+                                                                                Start
+                                                                                date
                                                                             </th>
                                                                             <th
                                                                                 scope="col"
                                                                                 className="px-3 py-2 text-left font-semibold text-gray-900"
                                                                             >
-                                                                                End date
+                                                                                End
+                                                                                date
                                                                             </th>
                                                                             <th
                                                                                 scope="col"
@@ -1386,182 +1410,219 @@ export default function FiscalYearPeriodsPage() {
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody className="divide-y divide-gray-200 bg-white">
-                                                                        {periods.map((period, index) => {
-                                                                            const errorsForRow =
-                                                                                periodErrors[index] ?? {};
+                                                                        {periods.map(
+                                                                            (
+                                                                                period,
+                                                                                index
+                                                                            ) => {
+                                                                                const errorsForRow =
+                                                                                    periodErrors[
+                                                                                        index
+                                                                                    ] ??
+                                                                                    {};
 
-                                                                            return (
-                                                                                <tr
-                                                                                    key={
-                                                                                        period.id ??
-                                                                                        `period-${index}`
-                                                                                    }
-                                                                                >
-                                                                                    <td className="px-3 py-2 align-top">
-                                                                                        <div
-                                                                                            className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
-                                                                                                errorsForRow.periodNumber
-                                                                                                    ? "outline-red-500"
-                                                                                                    : "outline-gray-300"
-                                                                                            }`}
-                                                                                        >
-                                                                                            <input
-                                                                                                type="text"
-                                                                                                inputMode="numeric"
-                                                                                                value={
-                                                                                                    period.periodNumber
-                                                                                                }
-                                                                                                onChange={handlePeriodFieldChange(
-                                                                                                    index,
-                                                                                                    "periodNumber"
-                                                                                                )}
-                                                                                                onBlur={handlePeriodFieldBlur(
-                                                                                                    index,
-                                                                                                    "periodNumber"
-                                                                                                )}
-                                                                                                className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
-                                                                                                placeholder="e.g. 1"
-                                                                                            />
-                                                                                        </div>
-                                                                                        {errorsForRow.periodNumber ? (
-                                                                                            <p className="mt-2 text-xs text-red-600" role="alert">
-                                                                                                {
+                                                                                return (
+                                                                                    <tr
+                                                                                        key={
+                                                                                            period.id ??
+                                                                                            `period-${index}`
+                                                                                        }
+                                                                                    >
+                                                                                        <td className="px-3 py-2 align-top">
+                                                                                            <div
+                                                                                                className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                                                     errorsForRow.periodNumber
-                                                                                                }
-                                                                                            </p>
-                                                                                        ) : null}
-                                                                                    </td>
-                                                                                    <td className="px-3 py-2 align-top">
-                                                                                        <div
-                                                                                            className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
-                                                                                                errorsForRow.startDate
-                                                                                                    ? "outline-red-500"
-                                                                                                    : "outline-gray-300"
-                                                                                            }`}
-                                                                                        >
-                                                                                            <input
-                                                                                                type="date"
-                                                                                                value={
-                                                                                                    period.startDate
-                                                                                                }
-                                                                                                onChange={handlePeriodFieldChange(
-                                                                                                    index,
-                                                                                                    "startDate"
-                                                                                                )}
-                                                                                                onBlur={handlePeriodFieldBlur(
-                                                                                                    index,
-                                                                                                    "startDate"
-                                                                                                )}
-                                                                                                className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
-                                                                                            />
-                                                                                        </div>
-                                                                                        {errorsForRow.startDate ? (
-                                                                                            <p className="mt-2 text-xs text-red-600" role="alert">
-                                                                                                {
-                                                                                                    errorsForRow.startDate
-                                                                                                }
-                                                                                            </p>
-                                                                                        ) : null}
-                                                                                    </td>
-                                                                                    <td className="px-3 py-2 align-top">
-                                                                                        <div
-                                                                                            className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
-                                                                                                errorsForRow.endDate
-                                                                                                    ? "outline-red-500"
-                                                                                                    : "outline-gray-300"
-                                                                                            }`}
-                                                                                        >
-                                                                                            <input
-                                                                                                type="date"
-                                                                                                value={
-                                                                                                    period.endDate
-                                                                                                }
-                                                                                                onChange={handlePeriodFieldChange(
-                                                                                                    index,
-                                                                                                    "endDate"
-                                                                                                )}
-                                                                                                onBlur={handlePeriodFieldBlur(
-                                                                                                    index,
-                                                                                                    "endDate"
-                                                                                                )}
-                                                                                                className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
-                                                                                            />
-                                                                                        </div>
-                                                                                        {errorsForRow.endDate ? (
-                                                                                            <p className="mt-2 text-xs text-red-600" role="alert">
-                                                                                                {
-                                                                                                    errorsForRow.endDate
-                                                                                                }
-                                                                                            </p>
-                                                                                        ) : null}
-                                                                                    </td>
-                                                                                    <td className="px-3 py-2 align-top">
-                                                                                        <div
-                                                                                            className={`rounded-md bg-white outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
-                                                                                                errorsForRow.status
-                                                                                                    ? "outline-red-500"
-                                                                                                    : "outline-gray-300"
-                                                                                            }`}
-                                                                                        >
-                                                                                            <select
-                                                                                                value={
-                                                                                                    period.status
-                                                                                                }
-                                                                                                onChange={handlePeriodFieldChange(
-                                                                                                    index,
-                                                                                                    "status"
-                                                                                                )}
-                                                                                                onBlur={handlePeriodFieldBlur(
-                                                                                                    index,
-                                                                                                    "status"
-                                                                                                )}
-                                                                                                className="block w-full rounded-md border-0 bg-transparent py-2 pl-3 pr-10 text-sm text-gray-900 focus:outline-none"
+                                                                                                        ? "outline-red-500"
+                                                                                                        : "outline-gray-300"
+                                                                                                }`}
                                                                                             >
-                                                                                                {STATUS_OPTIONS.map(
-                                                                                                    (
-                                                                                                        option
-                                                                                                    ) => (
-                                                                                                        <option
-                                                                                                            key={
-                                                                                                                option
-                                                                                                            }
-                                                                                                            value={
-                                                                                                                option
-                                                                                                            }
-                                                                                                        >
-                                                                                                            {buildStatusLabel(
-                                                                                                                option
-                                                                                                            )}
-                                                                                                        </option>
-                                                                                                    )
-                                                                                                )}
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        {errorsForRow.status ? (
-                                                                                            <p className="mt-2 text-xs text-red-600" role="alert">
-                                                                                                {
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    inputMode="numeric"
+                                                                                                    value={
+                                                                                                        period.periodNumber
+                                                                                                    }
+                                                                                                    onChange={handlePeriodFieldChange(
+                                                                                                        index,
+                                                                                                        "periodNumber"
+                                                                                                    )}
+                                                                                                    onBlur={handlePeriodFieldBlur(
+                                                                                                        index,
+                                                                                                        "periodNumber"
+                                                                                                    )}
+                                                                                                    className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                                                                                                    placeholder="e.g. 1"
+                                                                                                />
+                                                                                            </div>
+                                                                                            {errorsForRow.periodNumber ? (
+                                                                                                <p
+                                                                                                    className="mt-2 text-xs text-red-600"
+                                                                                                    role="alert"
+                                                                                                >
+                                                                                                    {
+                                                                                                        errorsForRow.periodNumber
+                                                                                                    }
+                                                                                                </p>
+                                                                                            ) : null}
+                                                                                        </td>
+                                                                                        <td className="px-3 py-2 align-top">
+                                                                                            <div
+                                                                                                className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                                                    errorsForRow.startDate
+                                                                                                        ? "outline-red-500"
+                                                                                                        : "outline-gray-300"
+                                                                                                }`}
+                                                                                            >
+                                                                                                <input
+                                                                                                    type="date"
+                                                                                                    value={
+                                                                                                        period.startDate
+                                                                                                    }
+                                                                                                    onChange={handlePeriodFieldChange(
+                                                                                                        index,
+                                                                                                        "startDate"
+                                                                                                    )}
+                                                                                                    onBlur={handlePeriodFieldBlur(
+                                                                                                        index,
+                                                                                                        "startDate"
+                                                                                                    )}
+                                                                                                    className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
+                                                                                                />
+                                                                                            </div>
+                                                                                            {errorsForRow.startDate ? (
+                                                                                                <p
+                                                                                                    className="mt-2 text-xs text-red-600"
+                                                                                                    role="alert"
+                                                                                                >
+                                                                                                    {
+                                                                                                        errorsForRow.startDate
+                                                                                                    }
+                                                                                                </p>
+                                                                                            ) : null}
+                                                                                        </td>
+                                                                                        <td className="px-3 py-2 align-top">
+                                                                                            <div
+                                                                                                className={`rounded-md bg-white pl-3 outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
+                                                                                                    errorsForRow.endDate
+                                                                                                        ? "outline-red-500"
+                                                                                                        : "outline-gray-300"
+                                                                                                }`}
+                                                                                            >
+                                                                                                <input
+                                                                                                    type="date"
+                                                                                                    value={
+                                                                                                        period.endDate
+                                                                                                    }
+                                                                                                    onChange={handlePeriodFieldChange(
+                                                                                                        index,
+                                                                                                        "endDate"
+                                                                                                    )}
+                                                                                                    onBlur={handlePeriodFieldBlur(
+                                                                                                        index,
+                                                                                                        "endDate"
+                                                                                                    )}
+                                                                                                    className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
+                                                                                                />
+                                                                                            </div>
+                                                                                            {errorsForRow.endDate ? (
+                                                                                                <p
+                                                                                                    className="mt-2 text-xs text-red-600"
+                                                                                                    role="alert"
+                                                                                                >
+                                                                                                    {
+                                                                                                        errorsForRow.endDate
+                                                                                                    }
+                                                                                                </p>
+                                                                                            ) : null}
+                                                                                        </td>
+                                                                                        <td className="px-3 py-2 align-top">
+                                                                                            <div
+                                                                                                className={`rounded-md bg-white outline-1 -outline-offset-1 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 ${
                                                                                                     errorsForRow.status
+                                                                                                        ? "outline-red-500"
+                                                                                                        : "outline-gray-300"
+                                                                                                }`}
+                                                                                            >
+                                                                                                <select
+                                                                                                    value={
+                                                                                                        period.status
+                                                                                                    }
+                                                                                                    onChange={handlePeriodFieldChange(
+                                                                                                        index,
+                                                                                                        "status"
+                                                                                                    )}
+                                                                                                    onBlur={handlePeriodFieldBlur(
+                                                                                                        index,
+                                                                                                        "status"
+                                                                                                    )}
+                                                                                                    className="block w-full rounded-md border-0 bg-transparent py-2 pl-3 pr-10 text-sm text-gray-900 focus:outline-none"
+                                                                                                >
+                                                                                                    {STATUS_OPTIONS.map(
+                                                                                                        (
+                                                                                                            option
+                                                                                                        ) => (
+                                                                                                            <option
+                                                                                                                key={
+                                                                                                                    option
+                                                                                                                }
+                                                                                                                value={
+                                                                                                                    option
+                                                                                                                }
+                                                                                                            >
+                                                                                                                {buildStatusLabel(
+                                                                                                                    option
+                                                                                                                )}
+                                                                                                            </option>
+                                                                                                        )
+                                                                                                    )}
+                                                                                                </select>
+                                                                                            </div>
+                                                                                            {errorsForRow.status ? (
+                                                                                                <p
+                                                                                                    className="mt-2 text-xs text-red-600"
+                                                                                                    role="alert"
+                                                                                                >
+                                                                                                    {
+                                                                                                        errorsForRow.status
+                                                                                                    }
+                                                                                                </p>
+                                                                                            ) : null}
+                                                                                        </td>
+                                                                                        <td className="px-3 py-2 align-top">
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className="text-sm font-medium text-red-600 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                                                onClick={() =>
+                                                                                                    handleDeletePeriodLine(
+                                                                                                        index
+                                                                                                    )
                                                                                                 }
-                                                                                            </p>
-                                                                                        ) : null}
-                                                                                    </td>
-                                                                                    <td className="px-3 py-2 align-top">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className="text-sm font-medium text-red-600 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                                            onClick={() =>
-                                                                                                handleDeletePeriodLine(
-                                                                                                    index
-                                                                                                )
-                                                                                            }
-                                                                                            disabled={isSubmitting}
-                                                                                        >
-                                                                                            Delete Line
-                                                                                        </button>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        })}
+                                                                                                disabled={
+                                                                                                    isSubmitting
+                                                                                                }
+                                                                                            >
+                                                                                                <svg
+                                                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                                                    fill="none"
+                                                                                                    viewBox="0 0 24 24"
+                                                                                                    strokeWidth={
+                                                                                                        1.5
+                                                                                                    }
+                                                                                                    stroke="currentColor"
+                                                                                                    className="size-6"
+                                                                                                >
+                                                                                                    <path
+                                                                                                        strokeLinecap="round"
+                                                                                                        strokeLinejoin="round"
+                                                                                                        d="M6 7.5V19.125A2.625 2.625 0 0 0 8.625 21.75h6.75A2.625 2.625 0 0 0 18 19.125V7.5M4.5 7.5h15m-10.125 0V5.625A1.125 1.125 0 0 1 10.5 4.5h3a1.125 1.125 0 0 1 1.125 1.125V7.5"
+                                                                                                    />
+                                                                                                </svg>
+                                                                                            </button>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                );
+                                                                            }
+                                                                        )}
                                                                     </tbody>
                                                                 </table>
                                                             </div>
