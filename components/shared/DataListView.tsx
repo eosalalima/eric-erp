@@ -38,10 +38,7 @@ export type DataListViewProps<T> = {
     onPageSizeChange?: (pageSize: PageSizeOption) => void;
 };
 
-const getCellValue = <T,>(
-    column: DataListColumn<T>,
-    item: T
-): ReactNode => {
+const getCellValue = <T,>(column: DataListColumn<T>, item: T): ReactNode => {
     if (column.accessor) {
         return column.accessor(item);
     }
@@ -60,10 +57,7 @@ const getCellValue = <T,>(
     return null;
 };
 
-const getSearchableValue = <T,>(
-    column: DataListColumn<T>,
-    item: T
-): string => {
+const getSearchableValue = <T,>(column: DataListColumn<T>, item: T): string => {
     if (column.searchable === false) {
         return "";
     }
@@ -181,7 +175,7 @@ export default function DataListView<T>({
     };
 
     return (
-        <div className="flex h-full min-h-0 max-h-screen flex-col overflow-hidden">
+        <div className="flex flex-col h-full max-h-[calc(85vh-8rem)]">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full sm:max-w-xs">
                     <input
@@ -219,8 +213,8 @@ export default function DataListView<T>({
                 </button>
             </div>
             <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
-                <table className="min-w-full divide-y divide-gray-300">
-                    <thead className="bg-gray-50">
+                <table className="relative min-w-full divide-y divide-gray-300">
+                    <thead className="bg-gray-200 sticky top-0 z-10">
                         <tr>
                             {columns.map((column) => (
                                 <th
@@ -321,7 +315,9 @@ export default function DataListView<T>({
             </div>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">Rows per page:</span>
+                    <span className="text-sm text-gray-700">
+                        Rows per page:
+                    </span>
                     <select
                         value={pageSize}
                         onChange={handlePageSizeChange}

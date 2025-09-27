@@ -170,11 +170,14 @@ export default function FiscalYearPeriodsPage() {
     const [touchedFields, setTouchedFields] =
         useState<Record<keyof FormValues, boolean>>(defaultTouchedFields);
     const [formErrors, setFormErrors] = useState<ValidationErrors>({});
-    const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
+    const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(
+        null
+    );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [pendingDelete, setPendingDelete] =
-        useState<FiscalYearRecord | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<FiscalYearRecord | null>(
+        null
+    );
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -188,7 +191,9 @@ export default function FiscalYearPeriodsPage() {
                     const ledgerCode = item.ledger?.code ?? null;
 
                     if (ledgerName) {
-                        return ledgerCode ? `${ledgerName} (${ledgerCode})` : ledgerName;
+                        return ledgerCode
+                            ? `${ledgerName} (${ledgerCode})`
+                            : ledgerName;
                     }
 
                     if (ledgerCode) {
@@ -230,8 +235,8 @@ export default function FiscalYearPeriodsPage() {
                             item.status === "OPEN"
                                 ? "bg-green-50 text-green-700"
                                 : item.status === "LOCKED"
-                                  ? "bg-yellow-50 text-yellow-700"
-                                  : "bg-slate-50 text-slate-700"
+                                ? "bg-yellow-50 text-yellow-700"
+                                : "bg-slate-50 text-slate-700"
                         }`}
                     >
                         {buildStatusLabel(item.status)}
@@ -267,7 +272,9 @@ export default function FiscalYearPeriodsPage() {
                     new Map(
                         data
                             .map((item) => item.ledger)
-                            .filter((ledger): ledger is LedgerOption => Boolean(ledger))
+                            .filter((ledger): ledger is LedgerOption =>
+                                Boolean(ledger)
+                            )
                             .map((ledger) => [ledger.id, ledger])
                     ).values()
                 );
@@ -298,10 +305,14 @@ export default function FiscalYearPeriodsPage() {
         if (selectedFiscalYear) {
             setFormValues({
                 ledgerId: selectedFiscalYear.ledger_id ?? "",
-                year: selectedFiscalYear.year ? String(selectedFiscalYear.year) : "",
+                year: selectedFiscalYear.year
+                    ? String(selectedFiscalYear.year)
+                    : "",
                 startDate: toDateInputValue(selectedFiscalYear.start_date),
                 endDate: toDateInputValue(selectedFiscalYear.end_date),
-                status: (selectedFiscalYear.status?.toUpperCase() as FiscalYearStatus) ?? "OPEN",
+                status:
+                    (selectedFiscalYear.status?.toUpperCase() as FiscalYearStatus) ??
+                    "OPEN",
             });
         } else {
             setFormValues(defaultFormValues);
@@ -329,7 +340,9 @@ export default function FiscalYearPeriodsPage() {
         (values: FormValues, touched: Record<keyof FormValues, boolean>) => {
             const { errors } = validateForm(values);
             const filteredErrors = Object.fromEntries(
-                Object.entries(errors).filter(([key]) => touched[key as keyof FormValues])
+                Object.entries(errors).filter(
+                    ([key]) => touched[key as keyof FormValues]
+                )
             ) as ValidationErrors;
             setFormErrors(filteredErrors);
         },
@@ -439,7 +452,9 @@ export default function FiscalYearPeriodsPage() {
                 if (!response.ok) {
                     let message = "Failed to save fiscal year.";
                     try {
-                        const data = (await response.json()) as { error?: string };
+                        const data = (await response.json()) as {
+                            error?: string;
+                        };
                         if (data?.error) {
                             message = data.error;
                         }
@@ -516,7 +531,9 @@ export default function FiscalYearPeriodsPage() {
             if (!response.ok) {
                 let message = "Failed to delete fiscal year.";
                 try {
-                    const data = (await response.json()) as { message?: string };
+                    const data = (await response.json()) as {
+                        message?: string;
+                    };
                     if (data?.message) {
                         message = data.message;
                     }
@@ -551,9 +568,9 @@ export default function FiscalYearPeriodsPage() {
     return (
         <>
             <SignedIn>
-                <div className="space-y-6">
+                <div className="space-y-6 p-4">
                     <Breadcrumb items={breadcrumbItems} />
-                    <PageHeader title="Fiscal Year Periods" />
+                    <PageHeader title="Fiscal Year & Periods" />
 
                     {statusMessage ? (
                         <div
@@ -652,8 +669,13 @@ export default function FiscalYearPeriodsPage() {
                                                             className="relative rounded-md text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                                                         >
                                                             <span className="absolute -inset-2.5" />
-                                                            <span className="sr-only">Close panel</span>
-                                                            <XMarkIcon aria-hidden="true" className="size-6" />
+                                                            <span className="sr-only">
+                                                                Close panel
+                                                            </span>
+                                                            <XMarkIcon
+                                                                aria-hidden="true"
+                                                                className="size-6"
+                                                            />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -667,7 +689,10 @@ export default function FiscalYearPeriodsPage() {
                                             </div>
 
                                             <div className="relative flex-1 overflow-auto px-4 py-6 sm:px-6">
-                                                <form className="space-y-6" onSubmit={handleSubmit}>
+                                                <form
+                                                    className="space-y-6"
+                                                    onSubmit={handleSubmit}
+                                                >
                                                     <div>
                                                         <label
                                                             htmlFor="ledgerId"
@@ -687,20 +712,46 @@ export default function FiscalYearPeriodsPage() {
                                                                     <select
                                                                         id="ledgerId"
                                                                         name="ledgerId"
-                                                                        value={formValues.ledgerId}
-                                                                        onChange={handleFieldChange("ledgerId")}
-                                                                        onBlur={handleFieldBlur("ledgerId")}
+                                                                        value={
+                                                                            formValues.ledgerId
+                                                                        }
+                                                                        onChange={handleFieldChange(
+                                                                            "ledgerId"
+                                                                        )}
+                                                                        onBlur={handleFieldBlur(
+                                                                            "ledgerId"
+                                                                        )}
                                                                         className="block w-full rounded-md border-0 bg-transparent py-2 pl-3 pr-10 text-sm text-gray-900 focus:outline-none"
                                                                     >
-                                                                        <option value="" disabled>
-                                                                            Select a ledger
+                                                                        <option
+                                                                            value=""
+                                                                            disabled
+                                                                        >
+                                                                            Select
+                                                                            a
+                                                                            ledger
                                                                         </option>
-                                                                        {ledgerOptions.map((ledger) => (
-                                                                            <option key={ledger.id} value={ledger.id}>
-                                                                                {ledger.name ?? ledger.code ?? ledger.id}
-                                                                                {ledger.code ? ` (${ledger.code})` : ""}
-                                                                            </option>
-                                                                        ))}
+                                                                        {ledgerOptions.map(
+                                                                            (
+                                                                                ledger
+                                                                            ) => (
+                                                                                <option
+                                                                                    key={
+                                                                                        ledger.id
+                                                                                    }
+                                                                                    value={
+                                                                                        ledger.id
+                                                                                    }
+                                                                                >
+                                                                                    {ledger.name ??
+                                                                                        ledger.code ??
+                                                                                        ledger.id}
+                                                                                    {ledger.code
+                                                                                        ? ` (${ledger.code})`
+                                                                                        : ""}
+                                                                                </option>
+                                                                            )
+                                                                        )}
                                                                     </select>
                                                                 </div>
                                                             ) : (
@@ -715,17 +766,28 @@ export default function FiscalYearPeriodsPage() {
                                                                         id="ledgerId"
                                                                         name="ledgerId"
                                                                         type="text"
-                                                                        value={formValues.ledgerId}
-                                                                        onChange={handleFieldChange("ledgerId")}
-                                                                        onBlur={handleFieldBlur("ledgerId")}
+                                                                        value={
+                                                                            formValues.ledgerId
+                                                                        }
+                                                                        onChange={handleFieldChange(
+                                                                            "ledgerId"
+                                                                        )}
+                                                                        onBlur={handleFieldBlur(
+                                                                            "ledgerId"
+                                                                        )}
                                                                         className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                                                                         placeholder="Enter ledger ID"
                                                                     />
                                                                 </div>
                                                             )}
                                                             {formErrors.ledgerId ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.ledgerId}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.ledgerId
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -751,16 +813,27 @@ export default function FiscalYearPeriodsPage() {
                                                                     name="year"
                                                                     type="text"
                                                                     inputMode="numeric"
-                                                                    value={formValues.year}
-                                                                    onChange={handleFieldChange("year")}
-                                                                    onBlur={handleFieldBlur("year")}
+                                                                    value={
+                                                                        formValues.year
+                                                                    }
+                                                                    onChange={handleFieldChange(
+                                                                        "year"
+                                                                    )}
+                                                                    onBlur={handleFieldBlur(
+                                                                        "year"
+                                                                    )}
                                                                     className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                                                                     placeholder="e.g. 2025"
                                                                 />
                                                             </div>
                                                             {formErrors.year ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.year}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.year
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -786,9 +859,15 @@ export default function FiscalYearPeriodsPage() {
                                                                         id="startDate"
                                                                         name="startDate"
                                                                         type="date"
-                                                                        value={formValues.startDate}
-                                                                        onChange={handleFieldChange("startDate")}
-                                                                        onBlur={handleFieldBlur("startDate")}
+                                                                        value={
+                                                                            formValues.startDate
+                                                                        }
+                                                                        onChange={handleFieldChange(
+                                                                            "startDate"
+                                                                        )}
+                                                                        onBlur={handleFieldBlur(
+                                                                            "startDate"
+                                                                        )}
                                                                         className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
                                                                     />
                                                                 </div>
@@ -797,7 +876,9 @@ export default function FiscalYearPeriodsPage() {
                                                                         className="mt-2 text-sm text-red-600"
                                                                         role="alert"
                                                                     >
-                                                                        {formErrors.startDate}
+                                                                        {
+                                                                            formErrors.startDate
+                                                                        }
                                                                     </p>
                                                                 ) : null}
                                                             </div>
@@ -821,9 +902,15 @@ export default function FiscalYearPeriodsPage() {
                                                                         id="endDate"
                                                                         name="endDate"
                                                                         type="date"
-                                                                        value={formValues.endDate}
-                                                                        onChange={handleFieldChange("endDate")}
-                                                                        onBlur={handleFieldBlur("endDate")}
+                                                                        value={
+                                                                            formValues.endDate
+                                                                        }
+                                                                        onChange={handleFieldChange(
+                                                                            "endDate"
+                                                                        )}
+                                                                        onBlur={handleFieldBlur(
+                                                                            "endDate"
+                                                                        )}
                                                                         className="block w-full min-w-0 grow bg-transparent py-2 pl-1 pr-3 text-sm text-gray-900 focus:outline-none"
                                                                     />
                                                                 </div>
@@ -832,7 +919,9 @@ export default function FiscalYearPeriodsPage() {
                                                                         className="mt-2 text-sm text-red-600"
                                                                         role="alert"
                                                                     >
-                                                                        {formErrors.endDate}
+                                                                        {
+                                                                            formErrors.endDate
+                                                                        }
                                                                     </p>
                                                                 ) : null}
                                                             </div>
@@ -857,21 +946,45 @@ export default function FiscalYearPeriodsPage() {
                                                                 <select
                                                                     id="status"
                                                                     name="status"
-                                                                    value={formValues.status}
-                                                                    onChange={handleFieldChange("status")}
-                                                                    onBlur={handleFieldBlur("status")}
+                                                                    value={
+                                                                        formValues.status
+                                                                    }
+                                                                    onChange={handleFieldChange(
+                                                                        "status"
+                                                                    )}
+                                                                    onBlur={handleFieldBlur(
+                                                                        "status"
+                                                                    )}
                                                                     className="block w-full rounded-md border-0 bg-transparent py-2 pl-3 pr-10 text-sm text-gray-900 focus:outline-none"
                                                                 >
-                                                                    {STATUS_OPTIONS.map((option) => (
-                                                                        <option key={option} value={option}>
-                                                                            {buildStatusLabel(option)}
-                                                                        </option>
-                                                                    ))}
+                                                                    {STATUS_OPTIONS.map(
+                                                                        (
+                                                                            option
+                                                                        ) => (
+                                                                            <option
+                                                                                key={
+                                                                                    option
+                                                                                }
+                                                                                value={
+                                                                                    option
+                                                                                }
+                                                                            >
+                                                                                {buildStatusLabel(
+                                                                                    option
+                                                                                )}
+                                                                            </option>
+                                                                        )
+                                                                    )}
                                                                 </select>
                                                             </div>
                                                             {formErrors.status ? (
-                                                                <p className="mt-2 text-sm text-red-600" role="alert">
-                                                                    {formErrors.status}
+                                                                <p
+                                                                    className="mt-2 text-sm text-red-600"
+                                                                    role="alert"
+                                                                >
+                                                                    {
+                                                                        formErrors.status
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -881,23 +994,30 @@ export default function FiscalYearPeriodsPage() {
                                                         <button
                                                             type="button"
                                                             className="rounded px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                                            onClick={() => handleDrawerClose()}
-                                                            disabled={isSubmitting}
+                                                            onClick={() =>
+                                                                handleDrawerClose()
+                                                            }
+                                                            disabled={
+                                                                isSubmitting
+                                                            }
                                                         >
                                                             Cancel
                                                         </button>
                                                         <button
                                                             type="submit"
                                                             className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            disabled={isSubmitting || !isFormValid}
+                                                            disabled={
+                                                                isSubmitting ||
+                                                                !isFormValid
+                                                            }
                                                         >
                                                             {isSubmitting
                                                                 ? selectedFiscalYear
                                                                     ? "Updating..."
                                                                     : "Creating..."
                                                                 : selectedFiscalYear
-                                                                    ? "Update"
-                                                                    : "Create"}
+                                                                ? "Update"
+                                                                : "Create"}
                                                         </button>
                                                     </div>
                                                 </form>
@@ -914,7 +1034,10 @@ export default function FiscalYearPeriodsPage() {
                         onClose={resetDeleteState}
                         className="relative z-50"
                     >
-                        <div className="fixed inset-0 bg-gray-500/75" aria-hidden="true" />
+                        <div
+                            className="fixed inset-0 bg-gray-500/75"
+                            aria-hidden="true"
+                        />
                         <div className="fixed inset-0 flex items-center justify-center p-4">
                             <DialogPanel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl">
                                 <div className="p-6">
@@ -922,17 +1045,26 @@ export default function FiscalYearPeriodsPage() {
                                         Confirm deletion
                                     </DialogTitle>
                                     <p className="mt-4 text-sm text-gray-600">
-                                        Are you sure you want to delete the fiscal year
-                                        {" "}
+                                        Are you sure you want to delete the
+                                        fiscal year{" "}
                                         <span className="font-medium text-gray-900">
                                             {pendingDelete
-                                                ? `${pendingDelete.year} (${pendingDelete.ledger?.name ?? pendingDelete.ledger?.code ?? pendingDelete.ledger_id})`
+                                                ? `${pendingDelete.year} (${
+                                                      pendingDelete.ledger
+                                                          ?.name ??
+                                                      pendingDelete.ledger
+                                                          ?.code ??
+                                                      pendingDelete.ledger_id
+                                                  })`
                                                 : "this fiscal year"}
                                         </span>
                                         ? This action cannot be undone.
                                     </p>
                                     {deleteError ? (
-                                        <p className="mt-4 text-sm text-red-600" role="alert">
+                                        <p
+                                            className="mt-4 text-sm text-red-600"
+                                            role="alert"
+                                        >
                                             {deleteError}
                                         </p>
                                     ) : null}

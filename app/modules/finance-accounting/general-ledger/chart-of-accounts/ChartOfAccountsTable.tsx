@@ -124,7 +124,7 @@ export default function ChartOfAccountsTable({
         <div className="flex flex-col h-full max-h-[calc(85vh-8rem)]">
             <div className="flex-1 overflow-auto">
                 <table className="relative min-w-full divide-y divide-gray-300">
-                    <thead className="bg-gray-50 sticky top-0 z-10">
+                    <thead className="bg-gray-200 sticky top-0 z-10">
                         <tr>
                             <th
                                 scope="col"
