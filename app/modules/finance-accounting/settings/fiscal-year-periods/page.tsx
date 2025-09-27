@@ -48,6 +48,11 @@ type FiscalYearRecord = {
     ledger?: LedgerOption | null;
 };
 
+type FetchedFiscalYearRecord = FiscalYearRecord & {
+    period?: FiscalYearPeriodRecord[];
+    periods?: FiscalYearPeriodRecord[];
+};
+
 type FiscalYearPeriodRecord = {
     id: string;
     period_no: number | null;
@@ -470,15 +475,15 @@ export default function FiscalYearPeriodsPage() {
                     throw new Error("Failed to load fiscal year periods.");
                 }
 
-                const data = (await response.json()) as FiscalYearRecord & {
-                    periods?: FiscalYearPeriodRecord[];
-                };
+                const data = (await response.json()) as FetchedFiscalYearRecord;
 
                 if (!isActive) {
                     return;
                 }
 
-                const derivedPeriods = (data.periods ?? []).map(
+                const periodRecords = data.period ?? data.periods ?? [];
+
+                const derivedPeriods = periodRecords.map(
                     (period) =>
                         ({
                             id: period.id,
