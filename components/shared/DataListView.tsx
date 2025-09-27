@@ -181,7 +181,7 @@ export default function DataListView<T>({
     };
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full min-h-0 max-h-screen flex-col overflow-hidden">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full sm:max-w-xs">
                     <input
@@ -218,7 +218,7 @@ export default function DataListView<T>({
                     Add
                 </button>
             </div>
-            <div className="flex-1 overflow-x-auto">
+            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-300">
                     <thead className="bg-gray-50">
                         <tr>
