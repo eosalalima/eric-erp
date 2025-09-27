@@ -212,7 +212,7 @@ export default function DataListView<T>({
                     Add
                 </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
+            <div className="flex-1 overflow-auto">
                 <table className="relative min-w-full divide-y divide-gray-300 rounded-lg overflow-hidden border border-gray-300">
                     <thead className="bg-gray-200 sticky top-0 z-10">
                         <tr>
