@@ -40,10 +40,100 @@ function parseDateOnly(value: unknown) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function normalizeStatus(value: unknown): FiscalYearStatus {
+    return isFiscalYearStatus(value)
+        ? (value.toUpperCase() as FiscalYearStatus)
+        : "OPEN";
+}
+
+type PeriodPayload = {
+    period_no: number;
+    start_date: Date;
+    end_date: Date;
+    status: FiscalYearStatus;
+};
+
+function parsePeriodsInput(
+    value: unknown
+): { periods: PeriodPayload[] | undefined; error?: string } {
+    if (typeof value === "undefined") {
+        return { periods: undefined };
+    }
+
+    if (!Array.isArray(value)) {
+        return { periods: undefined, error: "periods must be an array." };
+    }
+
+    const parsed: PeriodPayload[] = [];
+    const seen = new Set<number>();
+
+    for (let index = 0; index < value.length; index += 1) {
+        const item = value[index];
+
+        if (!item || typeof item !== "object") {
+            return {
+                periods: undefined,
+                error: `periods[${index}] must be an object with period_no, start_date, end_date, and status.`,
+            };
+        }
+
+        const { period_no, start_date, end_date, status } =
+            item as Record<string, unknown>;
+
+        const parsedPeriodNo = parseYear(period_no);
+
+        if (!Number.isInteger(parsedPeriodNo) || parsedPeriodNo <= 0) {
+            return {
+                periods: undefined,
+                error: `periods[${index}].period_no must be a positive integer.`,
+            };
+        }
+
+        if (seen.has(parsedPeriodNo)) {
+            return {
+                periods: undefined,
+                error: `Duplicate period number ${parsedPeriodNo} found in periods array.`,
+            };
+        }
+
+        const parsedStartDate = parseDateOnly(start_date);
+        const parsedEndDate = parseDateOnly(end_date);
+
+        if (!parsedStartDate || !parsedEndDate) {
+            return {
+                periods: undefined,
+                error: `periods[${index}] must include valid start_date and end_date values.`,
+            };
+        }
+
+        if (parsedEndDate < parsedStartDate) {
+            return {
+                periods: undefined,
+                error: `periods[${index}].end_date cannot be earlier than start_date.`,
+            };
+        }
+
+        const normalizedStatus = normalizeStatus(status);
+
+        parsed.push({
+            period_no: parsedPeriodNo,
+            start_date: parsedStartDate,
+            end_date: parsedEndDate,
+            status: normalizedStatus,
+        });
+        seen.add(parsedPeriodNo);
+    }
+
+    parsed.sort((a, b) => a.period_no - b.period_no);
+
+    return { periods: parsed };
+}
+
 export async function GET(req: NextRequest) {
     try {
         const url = new URL(req.url);
         const includeLedgers = url.searchParams.get("includeLedgers") === "true";
+        const includePeriods = url.searchParams.get("includePeriods") === "true";
 
         const fiscalYearsPromise = prisma.fiscal_year.findMany({
             include: {
@@ -54,6 +144,13 @@ export async function GET(req: NextRequest) {
                         code: true,
                     },
                 },
+                ...(includePeriods
+                    ? {
+                          period: {
+                              orderBy: { period_no: "asc" },
+                          },
+                      }
+                    : {}),
             },
             orderBy: [{ year: "desc" }],
         });
@@ -96,7 +193,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { ledger_id, year, start_date, end_date, status } =
+        const { ledger_id, year, start_date, end_date, status, periods } =
             body as Record<string, unknown>;
 
         if (typeof ledger_id !== "string" || ledger_id.trim() === "") {
@@ -131,9 +228,18 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const normalizedStatus = isFiscalYearStatus(status)
-            ? (status.toUpperCase() as FiscalYearStatus)
-            : "OPEN";
+        const periodsResult = parsePeriodsInput(periods);
+
+        if (periodsResult.error) {
+            return NextResponse.json(
+                { error: periodsResult.error },
+                { status: 400 }
+            );
+        }
+
+        const shouldIncludePeriods = Boolean(
+            periodsResult.periods && periodsResult.periods.length > 0
+        );
 
         const createdFiscalYear = await prisma.fiscal_year.create({
             data: {
@@ -141,8 +247,27 @@ export async function POST(req: NextRequest) {
                 year: parsedYear,
                 start_date: parsedStartDate,
                 end_date: parsedEndDate,
-                status: normalizedStatus,
+                status: normalizeStatus(status),
+                ...(shouldIncludePeriods
+                    ? {
+                          period: {
+                              create: periodsResult.periods!.map((period) => ({
+                                  period_no: period.period_no,
+                                  start_date: period.start_date,
+                                  end_date: period.end_date,
+                                  status: period.status,
+                              })),
+                          },
+                      }
+                    : {}),
             },
+            include: shouldIncludePeriods
+                ? {
+                      period: {
+                          orderBy: { period_no: "asc" },
+                      },
+                  }
+                : undefined,
         });
 
         return NextResponse.json(createdFiscalYear, { status: 201 });
