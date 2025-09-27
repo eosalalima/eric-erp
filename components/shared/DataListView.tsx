@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
@@ -207,13 +207,13 @@ export default function DataListView<T>({
                 <button
                     type="button"
                     onClick={handleAdd}
-                    className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                     Add
                 </button>
             </div>
             <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
-                <table className="relative min-w-full divide-y divide-gray-300">
+                <table className="relative min-w-full divide-y divide-gray-300 rounded-lg overflow-hidden border border-gray-300">
                     <thead className="bg-gray-200 sticky top-0 z-10">
                         <tr>
                             {columns.map((column) => (
