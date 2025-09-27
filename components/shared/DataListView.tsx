@@ -214,13 +214,13 @@ export default function DataListView<T>({
             </div>
             <div className="flex-1 overflow-auto">
                 <table className="relative min-w-full divide-y divide-gray-300 rounded-lg overflow-hidden border border-gray-300">
-                    <thead className="bg-gray-200 sticky top-0 z-10">
+                    <thead className="bg-gray-200">
                         <tr>
                             {columns.map((column) => (
                                 <th
                                     key={column.id}
                                     scope="col"
-                                    className={`px-3 py-3.5 text-left text-sm font-semibold text-gray-900 ${
+                                    className={`sticky top-0 z-10 bg-gray-200 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 ${
                                         column.headerClassName ?? ""
                                     }`}
                                 >
@@ -229,7 +229,7 @@ export default function DataListView<T>({
                             ))}
                             <th
                                 scope="col"
-                                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                className="sticky top-0 z-10 bg-gray-200 px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                             >
                                 Action
                             </th>
