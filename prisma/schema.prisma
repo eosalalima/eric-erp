@@ -22,210 +22,6 @@ model user {
   @@schema("public")
 }
 
-model account {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ledger_id              String                   @db.Uuid
-  code                   String
-  name                   String
-  description            String?
-  level                  Int
-  parent_id              String?                  @db.Uuid
-  type                   account_type
-  normal_balance         normal_balance
-  is_postable            Boolean?                 @default(true)
-  status                 String?                  @default("ACTIVE")
-  ledger                 ledger                   @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  account                account?                 @relation("accountToaccount", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_account          account[]                @relation("accountToaccount")
-  account_period_balance account_period_balance[]
-  journal_line           journal_line[]
-
-  @@unique([ledger_id, code], map: "account_code_unique_per_ledger")
-  @@index([ledger_id, type], map: "account_ledger_type_idx")
-  @@schema("finance")
-}
-
-model account_period_balance {
-  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ledger_id      String  @db.Uuid
-  account_id     String  @db.Uuid
-  period_id      String  @db.Uuid
-  cost_center_id String? @db.Uuid
-  department_id  String? @db.Uuid
-  project_id     String? @db.Uuid
-  partner_id     String? @db.Uuid
-  opening        Decimal @default(0) @db.Decimal(18, 2)
-  debits         Decimal @default(0) @db.Decimal(18, 2)
-  credits        Decimal @default(0) @db.Decimal(18, 2)
-  closing        Decimal @default(0) @db.Decimal(18, 2)
-  account        account @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  ledger         ledger  @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  period         period  @relation(fields: [period_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([ledger_id, account_id, period_id, cost_center_id, department_id, project_id, partner_id], map: "apb_unique")
-  @@index([ledger_id, account_id, period_id], map: "apb_fast_idx")
-  @@schema("finance")
-}
-
-model approval {
-  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  journal_entry_id String        @db.Uuid
-  state            String
-  approved_by      String?
-  approved_at      DateTime?     @db.Timestamptz(6)
-  remarks          String?
-  journal_entry    journal_entry @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@schema("finance")
-}
-
-model attachment {
-  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  journal_entry_id String        @db.Uuid
-  file_url         String
-  filename         String
-  uploaded_by      String
-  uploaded_at      DateTime      @default(now()) @db.Timestamptz(6)
-  journal_entry    journal_entry @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@schema("finance")
-}
-
-model currency {
-  code                                                String          @id
-  name                                                String
-  decimals                                            Int             @default(2)
-  exchange_rate_exchange_rate_from_currencyTocurrency exchange_rate[] @relation("exchange_rate_from_currencyTocurrency")
-  exchange_rate_exchange_rate_to_currencyTocurrency   exchange_rate[] @relation("exchange_rate_to_currencyTocurrency")
-  journal_entry                                       journal_entry[]
-  journal_line                                        journal_line[]
-
-  @@schema("finance")
-}
-
-model exchange_rate {
-  id                                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  from_currency                                  String
-  to_currency                                    String
-  rate_date                                      DateTime @db.Date
-  rate                                           Decimal  @db.Decimal(18, 8)
-  currency_exchange_rate_from_currencyTocurrency currency @relation("exchange_rate_from_currencyTocurrency", fields: [from_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
-  currency_exchange_rate_to_currencyTocurrency   currency @relation("exchange_rate_to_currencyTocurrency", fields: [to_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([from_currency, to_currency, rate_date], map: "exchange_rate_unique")
-  @@index([rate_date], map: "exchange_rate_date_idx")
-  @@schema("finance")
-}
-
-model fiscal_year {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ledger_id  String        @db.Uuid
-  year       Int
-  start_date DateTime      @db.Date
-  end_date   DateTime      @db.Date
-  status     period_status @default(OPEN)
-  ledger     ledger        @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  period     period[]
-
-  @@unique([ledger_id, year], map: "fiscal_year_unique_per_ledger")
-  @@index([ledger_id, status], map: "fiscal_year_status_idx")
-  @@schema("finance")
-}
-
-model journal_entry {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ledger_id     String         @db.Uuid
-  period_id     String         @db.Uuid
-  je_no         String?
-  doc_date      DateTime       @db.Date
-  post_date     DateTime?      @db.Date
-  currency_code String
-  fx_rate       Decimal        @db.Decimal(18, 8)
-  source        je_source      @default(MANUAL)
-  status        je_status      @default(DRAFT)
-  reference     String?
-  memo          String?
-  approval      approval[]
-  attachment    attachment[]
-  currency      currency       @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
-  ledger        ledger         @relation(fields: [ledger_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  period        period         @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  journal_line  journal_line[]
-
-  @@unique([ledger_id, je_no], map: "journal_entry_je_no_unique")
-  @@index([doc_date])
-  @@index([period_id, status], map: "journal_entry_period_status_idx")
-  @@schema("finance")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model journal_line {
-  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  journal_entry_id String          @db.Uuid
-  line_no          Int
-  account_id       String          @db.Uuid
-  debit            Decimal         @default(0) @db.Decimal(18, 2)
-  credit           Decimal         @default(0) @db.Decimal(18, 2)
-  amount_dc        Decimal         @db.Decimal(18, 2)
-  currency_code    String
-  fx_rate          Decimal         @db.Decimal(18, 8)
-  amount_txn       Decimal         @db.Decimal(18, 2)
-  cost_center_id   String?         @db.Uuid
-  department_id    String?         @db.Uuid
-  project_id       String?         @db.Uuid
-  partner_id       String?         @db.Uuid
-  tax_code_id      String?         @db.Uuid
-  memo             String?
-  account          account         @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  currency         currency        @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
-  journal_entry    journal_entry   @relation(fields: [journal_entry_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  subledger_link   subledger_link?
-
-  @@unique([journal_entry_id, line_no], map: "journal_line_unique_per_entry")
-  @@index([account_id], map: "journal_line_account_idx")
-  @@schema("finance")
-}
-
-model ledger {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                   String                   @unique
-  name                   String
-  base_currency          String
-  is_default             Boolean                  @default(false)
-  account                account[]
-  account_period_balance account_period_balance[]
-  fiscal_year            fiscal_year[]
-  journal_entry          journal_entry[]
-
-  @@schema("finance")
-}
-
-model period {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fiscal_year_id         String                   @db.Uuid
-  period_no              Int
-  start_date             DateTime                 @db.Date
-  end_date               DateTime                 @db.Date
-  status                 period_status            @default(OPEN)
-  account_period_balance account_period_balance[]
-  journal_entry          journal_entry[]
-  fiscal_year            fiscal_year              @relation(fields: [fiscal_year_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([fiscal_year_id, period_no], map: "period_unique_per_year")
-  @@index([status])
-  @@schema("finance")
-}
-
-model subledger_link {
-  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  journal_line_id String       @unique @db.Uuid
-  domain          String
-  external_id     String
-  journal_line    journal_line @relation(fields: [journal_line_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@schema("finance")
-}
-
 model navigation {
   id             String          @id(map: "Navigation_pkey") @db.Uuid
   applicationId  Int
@@ -252,6 +48,995 @@ model subnavigation {
   @@schema("public")
 }
 
+model accounts {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  ledger_id      String          @db.Uuid
+  code           String
+  name           String
+  description    String?
+  level          Int             @default(1)
+  parent_id      String?         @db.Uuid
+  type           account_type
+  normal_balance normal_balance
+  is_postable    Boolean         @default(true)
+  status         String          @default("ACTIVE")
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  ledgers        ledgers         @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  accounts       accounts?       @relation("accountsToaccounts", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  other_accounts accounts[]      @relation("accountsToaccounts")
+  budget_lines   budget_lines[]
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([ledger_id, code])
+  @@schema("finance")
+}
+
+model ap_bill_lines {
+  id                 String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bill_id            String            @db.Uuid
+  line_no            Int
+  item_code          String?
+  description        String
+  quantity           Decimal           @default(1) @db.Decimal(18, 4)
+  unit_price         Decimal           @default(0) @db.Decimal(18, 4)
+  line_subtotal      Decimal           @default(0) @db.Decimal(18, 4)
+  tax_code_id        String?           @db.Uuid
+  tax_amount         Decimal           @default(0) @db.Decimal(18, 4)
+  line_total         Decimal           @default(0) @db.Decimal(18, 4)
+  expense_account_id String?           @db.Uuid
+  cost_center_id     String?           @db.Uuid
+  project_id         String?           @db.Uuid
+  ap_bills           ap_bills          @relation(fields: [bill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  dim_cost_centers   dim_cost_centers? @relation(fields: [cost_center_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_projects       dim_projects?     @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bill_id, line_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ap_bills {
+  id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                   String                    @db.Uuid
+  vendor_id               String                    @db.Uuid
+  bill_no                 String
+  bill_date               DateTime                  @db.Date
+  due_date                DateTime                  @db.Date
+  currency_code           String                    @db.Char(3)
+  exchange_rate           Decimal                   @default(1.0) @db.Decimal(18, 8)
+  subtotal_amount         Decimal                   @default(0) @db.Decimal(18, 4)
+  tax_amount              Decimal                   @default(0) @db.Decimal(18, 4)
+  total_amount            Decimal                   @default(0) @db.Decimal(18, 4)
+  status                  doc_status                @default(DRAFT)
+  description             String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  posted_journal_id       String?                   @db.Uuid
+  ap_bill_lines           ap_bill_lines[]
+  business_units          business_units            @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies              currencies                @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  journals                journals?                 @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vendors                 vendors                   @relation(fields: [vendor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ap_payment_applications ap_payment_applications[]
+
+  @@unique([bu_id, bill_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ap_payment_applications {
+  id             String      @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  payment_id     String      @db.Uuid
+  bill_id        String      @db.Uuid
+  applied_amount Decimal     @db.Decimal(18, 4)
+  created_at     DateTime    @default(now()) @db.Timestamptz(6)
+  ap_bills       ap_bills    @relation(fields: [bill_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ap_payments    ap_payments @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([payment_id, bill_id])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ap_payments {
+  id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                   String                    @db.Uuid
+  payment_no              String
+  payment_date            DateTime                  @db.Date
+  vendor_id               String                    @db.Uuid
+  payment_type            ap_payment_type           @default(PAYMENT)
+  method                  payment_method
+  currency_code           String                    @db.Char(3)
+  amount                  Decimal                   @db.Decimal(18, 4)
+  unapplied_amount        Decimal                   @default(0) @db.Decimal(18, 4)
+  status                  doc_status                @default(DRAFT)
+  reference               String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  posted_journal_id       String?                   @db.Uuid
+  ap_payment_applications ap_payment_applications[]
+  business_units          business_units            @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies              currencies                @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  journals                journals?                 @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vendors                 vendors                   @relation(fields: [vendor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, payment_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model approvals {
+  id        String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  entity    String
+  entity_id String    @db.Uuid
+  step_no   Int
+  approver  String
+  action    String
+  remarks   String?
+  action_at DateTime? @db.Timestamptz(6)
+
+  @@unique([entity, entity_id, step_no])
+  @@schema("finance")
+}
+
+model ar_credit_memos {
+  id                String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id             String         @db.Uuid
+  customer_id       String         @db.Uuid
+  cm_no             String
+  cm_date           DateTime       @db.Date
+  currency_code     String         @db.Char(3)
+  amount            Decimal        @default(0) @db.Decimal(18, 4)
+  reason            String?
+  status            doc_status     @default(DRAFT)
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  posted_journal_id String?        @db.Uuid
+  business_units    business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies        currencies     @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  customers         customers      @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  journals          journals?      @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, cm_no])
+  @@schema("finance")
+}
+
+model ar_invoice_lines {
+  id                 String      @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  invoice_id         String      @db.Uuid
+  line_no            Int
+  item_code          String?
+  description        String
+  quantity           Decimal     @default(1) @db.Decimal(18, 4)
+  unit_price         Decimal     @default(0) @db.Decimal(18, 4)
+  line_subtotal      Decimal     @default(0) @db.Decimal(18, 4)
+  tax_code_id        String?     @db.Uuid
+  tax_amount         Decimal     @default(0) @db.Decimal(18, 4)
+  line_total         Decimal     @default(0) @db.Decimal(18, 4)
+  revenue_account_id String?     @db.Uuid
+  ar_invoices        ar_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([invoice_id, line_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ar_invoices {
+  id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                   String                    @db.Uuid
+  customer_id             String                    @db.Uuid
+  invoice_no              String
+  invoice_date            DateTime                  @db.Date
+  due_date                DateTime                  @db.Date
+  currency_code           String                    @db.Char(3)
+  exchange_rate           Decimal                   @default(1.0) @db.Decimal(18, 8)
+  subtotal_amount         Decimal                   @default(0) @db.Decimal(18, 4)
+  tax_amount              Decimal                   @default(0) @db.Decimal(18, 4)
+  total_amount            Decimal                   @default(0) @db.Decimal(18, 4)
+  status                  doc_status                @default(DRAFT)
+  description             String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  posted_journal_id       String?                   @db.Uuid
+  ar_invoice_lines        ar_invoice_lines[]
+  business_units          business_units            @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies              currencies                @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  customers               customers                 @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  journals                journals?                 @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ar_receipt_applications ar_receipt_applications[]
+
+  @@unique([bu_id, invoice_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ar_receipt_applications {
+  id             String      @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  receipt_id     String      @db.Uuid
+  invoice_id     String      @db.Uuid
+  applied_amount Decimal     @db.Decimal(18, 4)
+  created_at     DateTime    @default(now()) @db.Timestamptz(6)
+  ar_invoices    ar_invoices @relation(fields: [invoice_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ar_receipts    ar_receipts @relation(fields: [receipt_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([receipt_id, invoice_id])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ar_receipts {
+  id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                   String                    @db.Uuid
+  receipt_no              String
+  receipt_date            DateTime                  @db.Date
+  customer_id             String                    @db.Uuid
+  receipt_type            receipt_type              @default(RECEIPT)
+  method                  payment_method
+  currency_code           String                    @db.Char(3)
+  amount                  Decimal                   @db.Decimal(18, 4)
+  unapplied_amount        Decimal                   @default(0) @db.Decimal(18, 4)
+  status                  doc_status                @default(DRAFT)
+  reference               String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  posted_journal_id       String?                   @db.Uuid
+  ar_receipt_applications ar_receipt_applications[]
+  business_units          business_units            @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies              currencies                @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  customers               customers                 @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  journals                journals?                 @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, receipt_no])
+  @@schema("finance")
+}
+
+model attachments {
+  id          String   @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  entity      String
+  entity_id   String   @db.Uuid
+  file_name   String
+  file_type   String?
+  file_size   BigInt?
+  storage_uri String
+  uploaded_by String?
+  uploaded_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("finance")
+}
+
+model audit_logs {
+  id           String   @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  entity       String
+  entity_id    String   @db.Uuid
+  action       String
+  actor        String?
+  payload_json Json?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("finance")
+}
+
+model bank_accounts {
+  id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id             String              @db.Uuid
+  bank_id           String              @db.Uuid
+  account_no        String
+  name              String
+  currency_code     String              @db.Char(3)
+  is_active         Boolean             @default(true)
+  banks             banks               @relation(fields: [bank_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  business_units    business_units      @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies        currencies          @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  bank_statements   bank_statements[]
+  cash_transactions cash_transactions[]
+
+  @@unique([bu_id, account_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model bank_statement_lines {
+  id                  String             @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  statement_id        String             @db.Uuid
+  line_no             Int
+  txn_date            DateTime           @db.Date
+  description         String?
+  amount              Decimal            @db.Decimal(18, 4)
+  direction           String
+  matched_cash_txn_id String?            @db.Uuid
+  cash_transactions   cash_transactions? @relation(fields: [matched_cash_txn_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bank_statements     bank_statements    @relation(fields: [statement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([statement_id, line_no])
+  @@schema("finance")
+}
+
+model bank_statements {
+  id                   String                 @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bank_account_id      String                 @db.Uuid
+  statement_no         String
+  statement_date       DateTime               @db.Date
+  opening_balance      Decimal                @default(0) @db.Decimal(18, 4)
+  closing_balance      Decimal                @default(0) @db.Decimal(18, 4)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  bank_statement_lines bank_statement_lines[]
+  bank_accounts        bank_accounts          @relation(fields: [bank_account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bank_account_id, statement_no])
+  @@schema("finance")
+}
+
+model banks {
+  id            String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  name          String
+  swift_code    String?
+  country       String?
+  bank_accounts bank_accounts[]
+
+  @@schema("finance")
+}
+
+model budget_lines {
+  id               String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  version_id       String            @db.Uuid
+  account_id       String            @db.Uuid
+  period_id        String            @db.Uuid
+  cost_center_id   String?           @db.Uuid
+  department_id    String?           @db.Uuid
+  project_id       String?           @db.Uuid
+  product_id       String?           @db.Uuid
+  location_id      String?           @db.Uuid
+  amount           Decimal           @default(0) @db.Decimal(18, 4)
+  accounts         accounts          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_cost_centers dim_cost_centers? @relation(fields: [cost_center_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_departments  dim_departments?  @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_locations    dim_locations?    @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fiscal_periods   fiscal_periods    @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_products     dim_products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_projects     dim_projects?     @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  budget_versions  budget_versions   @relation(fields: [version_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([version_id, account_id, period_id, cost_center_id, department_id, project_id, product_id, location_id])
+  @@schema("finance")
+}
+
+model budget_versions {
+  id                                                             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  ledger_id                                                      String         @db.Uuid
+  code                                                           String
+  name                                                           String
+  start_period_id                                                String         @db.Uuid
+  end_period_id                                                  String         @db.Uuid
+  is_locked                                                      Boolean        @default(false)
+  created_at                                                     DateTime       @default(now()) @db.Timestamptz(6)
+  budget_lines                                                   budget_lines[]
+  fiscal_periods_budget_versions_end_period_idTofiscal_periods   fiscal_periods @relation("budget_versions_end_period_idTofiscal_periods", fields: [end_period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ledgers                                                        ledgers        @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fiscal_periods_budget_versions_start_period_idTofiscal_periods fiscal_periods @relation("budget_versions_start_period_idTofiscal_periods", fields: [start_period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([ledger_id, code])
+  @@schema("finance")
+}
+
+model business_units {
+  id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  org_id            String              @db.Uuid
+  code              String
+  name              String
+  tax_id            String?
+  currency_code     String              @db.Char(3)
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  ap_bills          ap_bills[]
+  ap_payments       ap_payments[]
+  ar_credit_memos   ar_credit_memos[]
+  ar_invoices       ar_invoices[]
+  ar_receipts       ar_receipts[]
+  bank_accounts     bank_accounts[]
+  organizations     organizations       @relation(fields: [org_id], references: [id], onUpdate: NoAction)
+  cash_transactions cash_transactions[]
+  customers         customers[]
+  dim_cost_centers  dim_cost_centers[]
+  dim_departments   dim_departments[]
+  dim_locations     dim_locations[]
+  dim_products      dim_products[]
+  dim_projects      dim_projects[]
+  fa_assets         fa_assets[]
+  fa_categories     fa_categories[]
+  fiscal_calendars  fiscal_calendars[]
+  ledgers           ledgers[]
+  payment_terms     payment_terms[]
+  tax_codes         tax_codes[]
+  vendors           vendors[]
+
+  @@unique([org_id, code])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cash_transactions {
+  id                   String                 @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                String                 @db.Uuid
+  bank_account_id      String                 @db.Uuid
+  txn_date             DateTime               @db.Date
+  description          String?
+  method               payment_method
+  amount               Decimal                @db.Decimal(18, 4)
+  direction            String
+  status               doc_status             @default(DRAFT)
+  posted_journal_id    String?                @db.Uuid
+  bank_statement_lines bank_statement_lines[]
+  bank_accounts        bank_accounts          @relation(fields: [bank_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  business_units       business_units         @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  journals             journals?              @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("finance")
+}
+
+model currencies {
+  code                                                       String            @id @db.Char(3)
+  name                                                       String
+  symbol                                                     String?
+  decimals                                                   Int               @default(2)
+  ap_bills                                                   ap_bills[]
+  ap_payments                                                ap_payments[]
+  ar_credit_memos                                            ar_credit_memos[]
+  ar_invoices                                                ar_invoices[]
+  ar_receipts                                                ar_receipts[]
+  bank_accounts                                              bank_accounts[]
+  customers                                                  customers[]
+  exchange_rates_exchange_rates_from_currencyTocurrencies    exchange_rates[]  @relation("exchange_rates_from_currencyTocurrencies")
+  exchange_rates_exchange_rates_to_currencyTocurrencies      exchange_rates[]  @relation("exchange_rates_to_currencyTocurrencies")
+  journal_lines_journal_lines_accounted_currencyTocurrencies journal_lines[]   @relation("journal_lines_accounted_currencyTocurrencies")
+  journal_lines_journal_lines_entered_currencyTocurrencies   journal_lines[]   @relation("journal_lines_entered_currencyTocurrencies")
+  ledgers                                                    ledgers[]
+  vendors                                                    vendors[]
+
+  @@schema("finance")
+}
+
+model customer_sites {
+  id            String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  customer_id   String    @db.Uuid
+  site_code     String
+  address_line1 String?
+  address_line2 String?
+  city          String?
+  region        String?
+  postal_code   String?
+  country       String?
+  is_primary    Boolean   @default(false)
+  customers     customers @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([customer_id, site_code])
+  @@schema("finance")
+}
+
+model customers {
+  id              String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id           String            @db.Uuid
+  customer_no     String
+  name            String
+  tax_id          String?
+  credit_limit    Decimal?          @db.Decimal(18, 2)
+  currency_code   String            @db.Char(3)
+  payment_term_id String?           @db.Uuid
+  status          String            @default("ACTIVE")
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  ar_credit_memos ar_credit_memos[]
+  ar_invoices     ar_invoices[]
+  ar_receipts     ar_receipts[]
+  customer_sites  customer_sites[]
+  business_units  business_units    @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies      currencies        @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  payment_terms   payment_terms?    @relation(fields: [payment_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, customer_no])
+  @@schema("finance")
+}
+
+model dim_cost_centers {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String          @db.Uuid
+  code           String
+  name           String
+  is_active      Boolean         @default(true)
+  ap_bill_lines  ap_bill_lines[]
+  budget_lines   budget_lines[]
+  business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model dim_departments {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String          @db.Uuid
+  code           String
+  name           String
+  is_active      Boolean         @default(true)
+  budget_lines   budget_lines[]
+  business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model dim_locations {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String          @db.Uuid
+  code           String
+  name           String
+  is_active      Boolean         @default(true)
+  budget_lines   budget_lines[]
+  business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fa_assets      fa_assets[]
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model dim_products {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String          @db.Uuid
+  sku            String
+  name           String
+  is_active      Boolean         @default(true)
+  budget_lines   budget_lines[]
+  business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([bu_id, sku])
+  @@schema("finance")
+}
+
+model dim_projects {
+  id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String          @db.Uuid
+  code           String
+  name           String
+  start_date     DateTime?       @db.Date
+  end_date       DateTime?       @db.Date
+  is_active      Boolean         @default(true)
+  ap_bill_lines  ap_bill_lines[]
+  budget_lines   budget_lines[]
+  business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fa_assets      fa_assets[]
+  gl_balances    gl_balances[]
+  journal_lines  journal_lines[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model exchange_rates {
+  id                                                  String     @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  from_currency                                       String     @db.Char(3)
+  to_currency                                         String     @db.Char(3)
+  rate_date                                           DateTime   @db.Date
+  rate                                                Decimal    @db.Decimal(18, 8)
+  created_at                                          DateTime   @default(now()) @db.Timestamptz(6)
+  currencies_exchange_rates_from_currencyTocurrencies currencies @relation("exchange_rates_from_currencyTocurrencies", fields: [from_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  currencies_exchange_rates_to_currencyTocurrencies   currencies @relation("exchange_rates_to_currencyTocurrencies", fields: [to_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([from_currency, to_currency, rate_date])
+  @@schema("finance")
+}
+
+model fa_assets {
+  id               String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id            String            @db.Uuid
+  asset_no         String
+  name             String
+  category_id      String            @db.Uuid
+  acquisition_date DateTime          @db.Date
+  acquisition_cost Decimal           @default(0) @db.Decimal(18, 4)
+  location_id      String?           @db.Uuid
+  project_id       String?           @db.Uuid
+  status           String            @default("ACTIVE")
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  business_units   business_units    @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fa_categories    fa_categories     @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_locations    dim_locations?    @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_projects     dim_projects?     @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fa_books         fa_books[]
+  fa_deprn_lines   fa_deprn_lines[]
+  fa_transactions  fa_transactions[]
+
+  @@unique([bu_id, asset_no])
+  @@schema("finance")
+}
+
+model fa_books {
+  id                  String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  asset_id            String    @db.Uuid
+  ledger_id           String    @db.Uuid
+  in_service_date     DateTime  @db.Date
+  useful_life_months  Int
+  depreciation_method String
+  residual_value      Decimal   @default(0) @db.Decimal(18, 4)
+  depreciable_basis   Decimal   @default(0) @db.Decimal(18, 4)
+  ytd_deprn           Decimal   @default(0) @db.Decimal(18, 4)
+  accumulated_deprn   Decimal   @default(0) @db.Decimal(18, 4)
+  fa_assets           fa_assets @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ledgers             ledgers   @relation(fields: [ledger_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([asset_id, ledger_id])
+  @@schema("finance")
+}
+
+model fa_categories {
+  id                       String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id                    String         @db.Uuid
+  code                     String
+  name                     String
+  useful_life_months       Int
+  depreciation_method      String
+  residual_rate            Decimal        @default(0) @db.Decimal(9, 4)
+  capitalization_threshold Decimal        @default(0) @db.Decimal(18, 2)
+  fa_assets                fa_assets[]
+  business_units           business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model fa_deprn_lines {
+  id                String        @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  run_id            String        @db.Uuid
+  asset_id          String        @db.Uuid
+  amount            Decimal       @db.Decimal(18, 4)
+  posted_journal_id String?       @db.Uuid
+  fa_assets         fa_assets     @relation(fields: [asset_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  journals          journals?     @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fa_deprn_runs     fa_deprn_runs @relation(fields: [run_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([run_id, asset_id])
+  @@schema("finance")
+}
+
+model fa_deprn_runs {
+  id             String           @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  ledger_id      String           @db.Uuid
+  period_id      String           @db.Uuid
+  run_no         String
+  run_date       DateTime         @db.Date
+  status         doc_status       @default(DRAFT)
+  fa_deprn_lines fa_deprn_lines[]
+  ledgers        ledgers          @relation(fields: [ledger_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fiscal_periods fiscal_periods   @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([ledger_id, period_id, run_no])
+  @@schema("finance")
+}
+
+model fa_transactions {
+  id                String      @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  asset_id          String      @db.Uuid
+  txn_type          fa_txn_type
+  txn_date          DateTime    @db.Date
+  amount            Decimal     @default(0) @db.Decimal(18, 4)
+  description       String?
+  ref_source        String?
+  ref_id            String?     @db.Uuid
+  posted_journal_id String?     @db.Uuid
+  fa_assets         fa_assets   @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  journals          journals?   @relation(fields: [posted_journal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fiscal_calendars {
+  id             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String         @db.Uuid
+  code           String
+  name           String
+  period_type    String         @default("MONTH")
+  start_month    Int            @default(1)
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  business_units business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fiscal_years   fiscal_years[]
+  ledgers        ledgers[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fiscal_periods {
+  id                                                              String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  year_id                                                         String            @db.Uuid
+  period_no                                                       Int
+  name                                                            String
+  start_date                                                      DateTime          @db.Date
+  end_date                                                        DateTime          @db.Date
+  is_open                                                         Boolean           @default(true)
+  created_at                                                      DateTime          @default(now()) @db.Timestamptz(6)
+  budget_lines                                                    budget_lines[]
+  budget_versions_budget_versions_end_period_idTofiscal_periods   budget_versions[] @relation("budget_versions_end_period_idTofiscal_periods")
+  budget_versions_budget_versions_start_period_idTofiscal_periods budget_versions[] @relation("budget_versions_start_period_idTofiscal_periods")
+  fa_deprn_runs                                                   fa_deprn_runs[]
+  fiscal_years                                                    fiscal_years      @relation(fields: [year_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  gl_balances                                                     gl_balances[]
+  journals                                                        journals[]
+
+  @@unique([year_id, period_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fiscal_years {
+  id               String           @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  calendar_id      String           @db.Uuid
+  year_label       Int
+  start_date       DateTime         @db.Date
+  end_date         DateTime         @db.Date
+  is_open          Boolean          @default(true)
+  created_at       DateTime         @default(now()) @db.Timestamptz(6)
+  fiscal_periods   fiscal_periods[]
+  fiscal_calendars fiscal_calendars @relation(fields: [calendar_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([calendar_id, year_label])
+  @@schema("finance")
+}
+
+model gl_balances {
+  id               String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  ledger_id        String            @db.Uuid
+  period_id        String            @db.Uuid
+  account_id       String            @db.Uuid
+  cost_center_id   String?           @db.Uuid
+  department_id    String?           @db.Uuid
+  project_id       String?           @db.Uuid
+  product_id       String?           @db.Uuid
+  location_id      String?           @db.Uuid
+  opening_balance  Decimal           @default(0) @db.Decimal(18, 4)
+  debit            Decimal           @default(0) @db.Decimal(18, 4)
+  credit           Decimal           @default(0) @db.Decimal(18, 4)
+  closing_balance  Decimal           @default(0) @db.Decimal(18, 4)
+  accounts         accounts          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_cost_centers dim_cost_centers? @relation(fields: [cost_center_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_departments  dim_departments?  @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ledgers          ledgers           @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  dim_locations    dim_locations?    @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fiscal_periods   fiscal_periods    @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_products     dim_products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_projects     dim_projects?     @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([ledger_id, period_id, account_id, cost_center_id, department_id, project_id, product_id, location_id])
+  @@schema("finance")
+}
+
+model journal_batches {
+  id          String     @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  ledger_id   String     @db.Uuid
+  batch_no    String
+  description String?
+  status      doc_status @default(DRAFT)
+  created_by  String?
+  created_at  DateTime   @default(now()) @db.Timestamptz(6)
+  approved_at DateTime?  @db.Timestamptz(6)
+  posted_at   DateTime?  @db.Timestamptz(6)
+  ledgers     ledgers    @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  journals    journals[]
+
+  @@unique([ledger_id, batch_no])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model journal_lines {
+  id                                                      String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  journal_id                                              String            @db.Uuid
+  line_no                                                 Int
+  account_id                                              String            @db.Uuid
+  description                                             String?
+  entered_currency                                        String            @db.Char(3)
+  accounted_currency                                      String            @db.Char(3)
+  exchange_rate                                           Decimal           @default(1.0) @db.Decimal(18, 8)
+  entered_debit                                           Decimal           @default(0) @db.Decimal(18, 4)
+  entered_credit                                          Decimal           @default(0) @db.Decimal(18, 4)
+  accounted_debit                                         Decimal           @default(0) @db.Decimal(18, 4)
+  accounted_credit                                        Decimal           @default(0) @db.Decimal(18, 4)
+  cost_center_id                                          String?           @db.Uuid
+  department_id                                           String?           @db.Uuid
+  project_id                                              String?           @db.Uuid
+  product_id                                              String?           @db.Uuid
+  location_id                                             String?           @db.Uuid
+  partner_id                                              String?           @db.Uuid
+  ref_subledger                                           String?
+  ref_doc_id                                              String?           @db.Uuid
+  created_at                                              DateTime          @default(now()) @db.Timestamptz(6)
+  accounts                                                accounts          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  currencies_journal_lines_accounted_currencyTocurrencies currencies        @relation("journal_lines_accounted_currencyTocurrencies", fields: [accounted_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  dim_cost_centers                                        dim_cost_centers? @relation(fields: [cost_center_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_departments                                         dim_departments?  @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  currencies_journal_lines_entered_currencyTocurrencies   currencies        @relation("journal_lines_entered_currencyTocurrencies", fields: [entered_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  journals                                                journals          @relation(fields: [journal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  dim_locations                                           dim_locations?    @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_products                                            dim_products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_projects                                            dim_projects?     @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([journal_id, line_no])
+  @@index([account_id], map: "idx_journal_lines_account")
+  @@index([cost_center_id, department_id, project_id, product_id, location_id], map: "idx_journal_lines_dims")
+  @@index([ref_subledger, ref_doc_id], map: "idx_journal_lines_subledger")
+  @@schema("finance")
+}
+
+model journals {
+  id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  batch_id          String?             @db.Uuid
+  ledger_id         String              @db.Uuid
+  journal_no        String
+  journal_date      DateTime            @db.Date
+  period_id         String              @db.Uuid
+  source            String              @default("MANUAL")
+  description       String?
+  status            doc_status          @default(DRAFT)
+  created_by        String?
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  posted_at         DateTime?           @db.Timestamptz(6)
+  ap_bills          ap_bills[]
+  ap_payments       ap_payments[]
+  ar_credit_memos   ar_credit_memos[]
+  ar_invoices       ar_invoices[]
+  ar_receipts       ar_receipts[]
+  cash_transactions cash_transactions[]
+  fa_deprn_lines    fa_deprn_lines[]
+  fa_transactions   fa_transactions[]
+  journal_lines     journal_lines[]
+  journal_batches   journal_batches?    @relation(fields: [batch_id], references: [id], onUpdate: NoAction)
+  ledgers           ledgers             @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fiscal_periods    fiscal_periods      @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([ledger_id, journal_no])
+  @@schema("finance")
+}
+
+model ledgers {
+  id                  String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id               String            @db.Uuid
+  code                String
+  name                String
+  functional_currency String            @db.Char(3)
+  calendar_id         String            @db.Uuid
+  is_primary          Boolean           @default(false)
+  is_active           Boolean           @default(true)
+  created_at          DateTime          @default(now()) @db.Timestamptz(6)
+  accounts            accounts[]
+  budget_versions     budget_versions[]
+  fa_books            fa_books[]
+  fa_deprn_runs       fa_deprn_runs[]
+  gl_balances         gl_balances[]
+  journal_batches     journal_batches[]
+  journals            journals[]
+  business_units      business_units    @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fiscal_calendars    fiscal_calendars  @relation(fields: [calendar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  currencies          currencies        @relation(fields: [functional_currency], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model organizations {
+  id             String           @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  code           String           @unique
+  name           String
+  is_active      Boolean          @default(true)
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime         @default(now()) @db.Timestamptz(6)
+  business_units business_units[]
+
+  @@schema("finance")
+}
+
+model payment_terms {
+  id             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id          String         @db.Uuid
+  code           String
+  name           String
+  days           Int            @default(30)
+  discount_days  Int?
+  discount_rate  Decimal?       @db.Decimal(5, 2)
+  customers      customers[]
+  business_units business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vendors        vendors[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+model tax_codes {
+  id               String             @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id            String             @db.Uuid
+  code             String
+  name             String
+  scope            tax_scope          @default(BOTH)
+  is_withholding   Boolean            @default(false)
+  is_vat           Boolean            @default(true)
+  business_units   business_units     @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tax_rates        tax_rates[]
+  tax_transactions tax_transactions[]
+
+  @@unique([bu_id, code])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_rates {
+  id             String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  tax_code_id    String    @db.Uuid
+  effective_from DateTime  @db.Date
+  effective_to   DateTime? @db.Date
+  rate_percent   Decimal   @db.Decimal(9, 4)
+  tax_codes      tax_codes @relation(fields: [tax_code_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tax_code_id, effective_from])
+  @@schema("finance")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_transactions {
+  id             String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  source         String
+  source_line_id String    @db.Uuid
+  tax_code_id    String    @db.Uuid
+  rate_percent   Decimal   @db.Decimal(9, 4)
+  taxable_amount Decimal   @db.Decimal(18, 4)
+  tax_amount     Decimal   @db.Decimal(18, 4)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  tax_codes      tax_codes @relation(fields: [tax_code_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([source, source_line_id, tax_code_id])
+  @@schema("finance")
+}
+
+model vendor_sites {
+  id            String  @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  vendor_id     String  @db.Uuid
+  site_code     String
+  address_line1 String?
+  address_line2 String?
+  city          String?
+  region        String?
+  postal_code   String?
+  country       String?
+  is_primary    Boolean @default(false)
+  vendors       vendors @relation(fields: [vendor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([vendor_id, site_code])
+  @@schema("finance")
+}
+
+model vendors {
+  id              String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
+  bu_id           String         @db.Uuid
+  vendor_no       String
+  name            String
+  tax_id          String?
+  currency_code   String         @db.Char(3)
+  payment_term_id String?        @db.Uuid
+  status          String         @default("ACTIVE")
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  ap_bills        ap_bills[]
+  ap_payments     ap_payments[]
+  vendor_sites    vendor_sites[]
+  business_units  business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  currencies      currencies     @relation(fields: [currency_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  payment_terms   payment_terms? @relation(fields: [payment_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bu_id, vendor_no])
+  @@schema("finance")
+}
+
 enum account_type {
   ASSET
   LIABILITY
@@ -263,26 +1048,6 @@ enum account_type {
   @@schema("finance")
 }
 
-enum je_source {
-  MANUAL
-  AP
-  AR
-  FA
-  PAYROLL
-  IMPORT
-  ADJUSTMENT
-
-  @@schema("finance")
-}
-
-enum je_status {
-  DRAFT
-  POSTED
-  VOID
-
-  @@schema("finance")
-}
-
 enum normal_balance {
   DEBIT
   CREDIT
@@ -290,10 +1055,60 @@ enum normal_balance {
   @@schema("finance")
 }
 
-enum period_status {
-  OPEN
-  CLOSED
-  LOCKED
+enum ap_payment_type {
+  PAYMENT
+  REFUND
+  REVERSAL
+
+  @@schema("finance")
+}
+
+enum doc_status {
+  DRAFT
+  APPROVED
+  POSTED
+  VOID
+  CANCELLED
+
+  @@schema("finance")
+}
+
+enum fa_txn_type {
+  ADD
+  CIP
+  CAPITALIZE
+  TRANSFER
+  IMPAIR
+  DISPOSE
+  RETIRE
+  ADJUST
+
+  @@schema("finance")
+}
+
+enum payment_method {
+  CASH
+  CHECK
+  BANK_TRANSFER
+  CARD
+  E_WALLET
+  OTHER
+
+  @@schema("finance")
+}
+
+enum receipt_type {
+  RECEIPT
+  REFUND
+  REVERSAL
+
+  @@schema("finance")
+}
+
+enum tax_scope {
+  AR
+  AP
+  BOTH
 
   @@schema("finance")
 }
