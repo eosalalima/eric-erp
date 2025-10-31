@@ -15,7 +15,7 @@ type NormalBalance = (typeof NORMAL_BALANCES)[number];
 
 export async function GET() {
     try {
-        const accounts = await prisma.account.findMany();
+        const accounts = await prisma.accounts.findMany();
         const sortedAccounts = accounts.sort((a, b) =>
             a.code.localeCompare(b.code)
         );
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
                 ? description.trim()
                 : null;
 
-        const newAccount = await prisma.account.create({
+        const newAccount = await prisma.accounts.create({
             data: {
                 ledger_id: ledger_id.trim(),
                 code: code.trim(),
