@@ -4,16 +4,18 @@ import { useMemo, useState } from "react";
 // Define the Account type locally if not available from @prisma/client
 export type Account = {
     id: string;
+    ledger_id: string;
     code: string;
     name: string;
+    description: string | null;
+    level: number;
+    parent_id: string | null;
     type: string;
     normal_balance: string;
+    is_postable: boolean | null;
     status: string;
-    ledger_id: string;
-    parent_id: string;
-    level: number;
-    description?: string | null;
-    is_postable?: boolean;
+    created_at?: string | Date;
+    updated_at?: string | Date;
 };
 
 type SortKey = "code" | "name";

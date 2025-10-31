@@ -28,7 +28,7 @@ export async function DELETE(
     }
 
     try {
-        await prisma.account.delete({ where: { id: accountId } });
+        await prisma.accounts.delete({ where: { id: accountId } });
 
         return NextResponse.json(
             { message: "Account deleted successfully" },
@@ -145,7 +145,7 @@ export async function PUT(
                 ? description.trim()
                 : null;
 
-        const updatedAccount = await prisma.account.update({
+        const updatedAccount = await prisma.accounts.update({
             where: { id: accountId },
             data: {
                 ledger_id: ledger_id.trim(),

@@ -179,7 +179,7 @@ export default function ChartOfAccountsPage() {
             try {
                 const res = await fetch("/api/finance-accounting/accounts");
                 if (!res.ok) throw new Error("Network response was not ok");
-                const data = await res.json();
+                const data = (await res.json()) as Account[];
                 setAccounts(data);
             } catch (fetchError) {
                 console.error(fetchError);
