@@ -51,15 +51,15 @@ model subnavigation {
 model accounts {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   ledger_id      String          @db.Uuid
-  code           String
-  name           String
+  code           String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   description    String?
   level          Int             @default(1)
   parent_id      String?         @db.Uuid
   type           account_type
   normal_balance normal_balance
   is_postable    Boolean         @default(true)
-  status         String          @default("ACTIVE")
+  status         String          @default("ACTIVE") @db.VarChar(255)
   created_at     DateTime        @default(now()) @db.Timestamptz(6)
   updated_at     DateTime        @default(now()) @db.Timestamptz(6)
   ledgers        ledgers         @relation(fields: [ledger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -77,7 +77,7 @@ model ap_bill_lines {
   id                 String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bill_id            String            @db.Uuid
   line_no            Int
-  item_code          String?
+  item_code          String?           @db.VarChar(255)
   description        String
   quantity           Decimal           @default(1) @db.Decimal(18, 4)
   unit_price         Decimal           @default(0) @db.Decimal(18, 4)
@@ -101,7 +101,7 @@ model ap_bills {
   id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id                   String                    @db.Uuid
   vendor_id               String                    @db.Uuid
-  bill_no                 String
+  bill_no                 String                    @db.VarChar(255)
   bill_date               DateTime                  @db.Date
   due_date                DateTime                  @db.Date
   currency_code           String                    @db.Char(3)
@@ -142,7 +142,7 @@ model ap_payment_applications {
 model ap_payments {
   id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id                   String                    @db.Uuid
-  payment_no              String
+  payment_no              String                    @db.VarChar(255)
   payment_date            DateTime                  @db.Date
   vendor_id               String                    @db.Uuid
   payment_type            ap_payment_type           @default(PAYMENT)
@@ -151,7 +151,7 @@ model ap_payments {
   amount                  Decimal                   @db.Decimal(18, 4)
   unapplied_amount        Decimal                   @default(0) @db.Decimal(18, 4)
   status                  doc_status                @default(DRAFT)
-  reference               String?
+  reference               String?                   @db.VarChar(255)
   created_at              DateTime                  @default(now()) @db.Timestamptz(6)
   posted_journal_id       String?                   @db.Uuid
   ap_payment_applications ap_payment_applications[]
@@ -167,11 +167,11 @@ model ap_payments {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model approvals {
   id        String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  entity    String
+  entity    String    @db.VarChar(255)
   entity_id String    @db.Uuid
   step_no   Int
-  approver  String
-  action    String
+  approver  String    @db.VarChar(255)
+  action    String    @db.VarChar(255)
   remarks   String?
   action_at DateTime? @db.Timestamptz(6)
 
@@ -183,7 +183,7 @@ model ar_credit_memos {
   id                String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id             String         @db.Uuid
   customer_id       String         @db.Uuid
-  cm_no             String
+  cm_no             String         @db.VarChar(255)
   cm_date           DateTime       @db.Date
   currency_code     String         @db.Char(3)
   amount            Decimal        @default(0) @db.Decimal(18, 4)
@@ -204,7 +204,7 @@ model ar_invoice_lines {
   id                 String      @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   invoice_id         String      @db.Uuid
   line_no            Int
-  item_code          String?
+  item_code          String?     @db.VarChar(255)
   description        String
   quantity           Decimal     @default(1) @db.Decimal(18, 4)
   unit_price         Decimal     @default(0) @db.Decimal(18, 4)
@@ -224,7 +224,7 @@ model ar_invoices {
   id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id                   String                    @db.Uuid
   customer_id             String                    @db.Uuid
-  invoice_no              String
+  invoice_no              String                    @db.VarChar
   invoice_date            DateTime                  @db.Date
   due_date                DateTime                  @db.Date
   currency_code           String                    @db.Char(3)
@@ -265,7 +265,7 @@ model ar_receipt_applications {
 model ar_receipts {
   id                      String                    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id                   String                    @db.Uuid
-  receipt_no              String
+  receipt_no              String                    @db.VarChar
   receipt_date            DateTime                  @db.Date
   customer_id             String                    @db.Uuid
   receipt_type            receipt_type              @default(RECEIPT)
@@ -289,13 +289,13 @@ model ar_receipts {
 
 model attachments {
   id          String   @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  entity      String
+  entity      String   @db.VarChar(255)
   entity_id   String   @db.Uuid
   file_name   String
-  file_type   String?
+  file_type   String?  @db.VarChar(255)
   file_size   BigInt?
   storage_uri String
-  uploaded_by String?
+  uploaded_by String?  @db.VarChar(255)
   uploaded_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@schema("finance")
@@ -303,10 +303,10 @@ model attachments {
 
 model audit_logs {
   id           String   @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  entity       String
+  entity       String   @db.VarChar(255)
   entity_id    String   @db.Uuid
-  action       String
-  actor        String?
+  action       String   @db.VarChar(255)
+  actor        String?  @db.VarChar(255)
   payload_json Json?
   created_at   DateTime @default(now()) @db.Timestamptz(6)
 
@@ -317,8 +317,8 @@ model bank_accounts {
   id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id             String              @db.Uuid
   bank_id           String              @db.Uuid
-  account_no        String
-  name              String
+  account_no        String              @db.VarChar(255)
+  name              String              @db.VarChar(255)
   currency_code     String              @db.Char(3)
   is_active         Boolean             @default(true)
   banks             banks               @relation(fields: [bank_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -351,7 +351,7 @@ model bank_statement_lines {
 model bank_statements {
   id                   String                 @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bank_account_id      String                 @db.Uuid
-  statement_no         String
+  statement_no         String                 @db.VarChar(255)
   statement_date       DateTime               @db.Date
   opening_balance      Decimal                @default(0) @db.Decimal(18, 4)
   closing_balance      Decimal                @default(0) @db.Decimal(18, 4)
@@ -365,9 +365,9 @@ model bank_statements {
 
 model banks {
   id            String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  name          String
-  swift_code    String?
-  country       String?
+  name          String          @db.VarChar(255)
+  swift_code    String?         @db.VarChar(255)
+  country       String?         @db.VarChar(255)
   bank_accounts bank_accounts[]
 
   @@schema("finance")
@@ -400,8 +400,8 @@ model budget_lines {
 model budget_versions {
   id                                                             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   ledger_id                                                      String         @db.Uuid
-  code                                                           String
-  name                                                           String
+  code                                                           String         @db.VarChar(255)
+  name                                                           String         @db.VarChar(255)
   start_period_id                                                String         @db.Uuid
   end_period_id                                                  String         @db.Uuid
   is_locked                                                      Boolean        @default(false)
@@ -418,9 +418,9 @@ model budget_versions {
 model business_units {
   id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   org_id            String              @db.Uuid
-  code              String
-  name              String
-  tax_id            String?
+  code              String              @db.VarChar(255)
+  name              String              @db.VarChar(255)
+  tax_id            String?             @db.VarChar(255)
   currency_code     String              @db.Char(3)
   is_active         Boolean             @default(true)
   created_at        DateTime            @default(now()) @db.Timestamptz(6)
@@ -473,7 +473,7 @@ model cash_transactions {
 
 model currencies {
   code                                                       String            @id @db.Char(3)
-  name                                                       String
+  name                                                       String            @db.VarChar(255)
   symbol                                                     String?
   decimals                                                   Int               @default(2)
   ap_bills                                                   ap_bills[]
@@ -496,13 +496,13 @@ model currencies {
 model customer_sites {
   id            String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   customer_id   String    @db.Uuid
-  site_code     String
+  site_code     String    @db.VarChar(255)
   address_line1 String?
   address_line2 String?
-  city          String?
-  region        String?
-  postal_code   String?
-  country       String?
+  city          String?   @db.VarChar(255)
+  region        String?   @db.VarChar(255)
+  postal_code   String?   @db.VarChar(255)
+  country       String?   @db.VarChar(255)
   is_primary    Boolean   @default(false)
   customers     customers @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -513,13 +513,13 @@ model customer_sites {
 model customers {
   id              String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id           String            @db.Uuid
-  customer_no     String
-  name            String
-  tax_id          String?
+  customer_no     String            @db.VarChar(255)
+  name            String            @db.VarChar(255)
+  tax_id          String?           @db.VarChar(255)
   credit_limit    Decimal?          @db.Decimal(18, 2)
   currency_code   String            @db.Char(3)
   payment_term_id String?           @db.Uuid
-  status          String            @default("ACTIVE")
+  status          String            @default("ACTIVE") @db.VarChar(255)
   created_at      DateTime          @default(now()) @db.Timestamptz(6)
   ar_credit_memos ar_credit_memos[]
   ar_invoices     ar_invoices[]
@@ -536,8 +536,8 @@ model customers {
 model dim_cost_centers {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String          @db.Uuid
-  code           String
-  name           String
+  code           String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   is_active      Boolean         @default(true)
   ap_bill_lines  ap_bill_lines[]
   budget_lines   budget_lines[]
@@ -552,8 +552,8 @@ model dim_cost_centers {
 model dim_departments {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String          @db.Uuid
-  code           String
-  name           String
+  code           String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   is_active      Boolean         @default(true)
   budget_lines   budget_lines[]
   business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -567,8 +567,8 @@ model dim_departments {
 model dim_locations {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String          @db.Uuid
-  code           String
-  name           String
+  code           String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   is_active      Boolean         @default(true)
   budget_lines   budget_lines[]
   business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -583,8 +583,8 @@ model dim_locations {
 model dim_products {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String          @db.Uuid
-  sku            String
-  name           String
+  sku            String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   is_active      Boolean         @default(true)
   budget_lines   budget_lines[]
   business_units business_units  @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -598,8 +598,8 @@ model dim_products {
 model dim_projects {
   id             String          @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String          @db.Uuid
-  code           String
-  name           String
+  code           String          @db.VarChar(255)
+  name           String          @db.VarChar(255)
   start_date     DateTime?       @db.Date
   end_date       DateTime?       @db.Date
   is_active      Boolean         @default(true)
@@ -632,14 +632,14 @@ model exchange_rates {
 model fa_assets {
   id               String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id            String            @db.Uuid
-  asset_no         String
-  name             String
+  asset_no         String            @db.VarChar(255)
+  name             String            @db.VarChar(255)
   category_id      String            @db.Uuid
   acquisition_date DateTime          @db.Date
   acquisition_cost Decimal           @default(0) @db.Decimal(18, 4)
   location_id      String?           @db.Uuid
   project_id       String?           @db.Uuid
-  status           String            @default("ACTIVE")
+  status           String            @default("ACTIVE") @db.VarChar(255)
   created_at       DateTime          @default(now()) @db.Timestamptz(6)
   business_units   business_units    @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   fa_categories    fa_categories     @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -659,7 +659,7 @@ model fa_books {
   ledger_id           String    @db.Uuid
   in_service_date     DateTime  @db.Date
   useful_life_months  Int
-  depreciation_method String
+  depreciation_method String    @db.VarChar(255)
   residual_value      Decimal   @default(0) @db.Decimal(18, 4)
   depreciable_basis   Decimal   @default(0) @db.Decimal(18, 4)
   ytd_deprn           Decimal   @default(0) @db.Decimal(18, 4)
@@ -674,10 +674,10 @@ model fa_books {
 model fa_categories {
   id                       String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id                    String         @db.Uuid
-  code                     String
-  name                     String
+  code                     String         @db.VarChar(255)
+  name                     String         @db.VarChar(255)
   useful_life_months       Int
-  depreciation_method      String
+  depreciation_method      String         @db.VarChar(255)
   residual_rate            Decimal        @default(0) @db.Decimal(9, 4)
   capitalization_threshold Decimal        @default(0) @db.Decimal(18, 2)
   fa_assets                fa_assets[]
@@ -705,7 +705,7 @@ model fa_deprn_runs {
   id             String           @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   ledger_id      String           @db.Uuid
   period_id      String           @db.Uuid
-  run_no         String
+  run_no         String           @db.VarChar(255)
   run_date       DateTime         @db.Date
   status         doc_status       @default(DRAFT)
   fa_deprn_lines fa_deprn_lines[]
@@ -723,7 +723,7 @@ model fa_transactions {
   txn_date          DateTime    @db.Date
   amount            Decimal     @default(0) @db.Decimal(18, 4)
   description       String?
-  ref_source        String?
+  ref_source        String?     @db.VarChar(255)
   ref_id            String?     @db.Uuid
   posted_journal_id String?     @db.Uuid
   fa_assets         fa_assets   @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -736,9 +736,9 @@ model fa_transactions {
 model fiscal_calendars {
   id             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String         @db.Uuid
-  code           String
-  name           String
-  period_type    String         @default("MONTH")
+  code           String         @db.VarChar(255)
+  name           String         @db.VarChar(255)
+  period_type    String         @default("MONTH") @db.VarChar(255)
   start_month    Int            @default(1)
   created_at     DateTime       @default(now()) @db.Timestamptz(6)
   business_units business_units @relation(fields: [bu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -754,7 +754,7 @@ model fiscal_periods {
   id                                                              String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   year_id                                                         String            @db.Uuid
   period_no                                                       Int
-  name                                                            String
+  name                                                            String            @db.VarChar(255)
   start_date                                                      DateTime          @db.Date
   end_date                                                        DateTime          @db.Date
   is_open                                                         Boolean           @default(true)
@@ -817,10 +817,10 @@ model gl_balances {
 model journal_batches {
   id          String     @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   ledger_id   String     @db.Uuid
-  batch_no    String
+  batch_no    String     @db.VarChar(255)
   description String?
   status      doc_status @default(DRAFT)
-  created_by  String?
+  created_by  String?    @db.VarChar(255)
   created_at  DateTime   @default(now()) @db.Timestamptz(6)
   approved_at DateTime?  @db.Timestamptz(6)
   posted_at   DateTime?  @db.Timestamptz(6)
@@ -851,7 +851,7 @@ model journal_lines {
   product_id                                              String?           @db.Uuid
   location_id                                             String?           @db.Uuid
   partner_id                                              String?           @db.Uuid
-  ref_subledger                                           String?
+  ref_subledger                                           String?           @db.VarChar(255)
   ref_doc_id                                              String?           @db.Uuid
   created_at                                              DateTime          @default(now()) @db.Timestamptz(6)
   accounts                                                accounts          @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -875,13 +875,13 @@ model journals {
   id                String              @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   batch_id          String?             @db.Uuid
   ledger_id         String              @db.Uuid
-  journal_no        String
+  journal_no        String              @db.VarChar(255)
   journal_date      DateTime            @db.Date
   period_id         String              @db.Uuid
-  source            String              @default("MANUAL")
+  source            String              @default("MANUAL") @db.VarChar(255)
   description       String?
   status            doc_status          @default(DRAFT)
-  created_by        String?
+  created_by        String?             @db.VarChar(255)
   created_at        DateTime            @default(now()) @db.Timestamptz(6)
   posted_at         DateTime?           @db.Timestamptz(6)
   ap_bills          ap_bills[]
@@ -904,8 +904,8 @@ model journals {
 model ledgers {
   id                  String            @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id               String            @db.Uuid
-  code                String
-  name                String
+  code                String            @db.VarChar(255)
+  name                String            @db.VarChar(255)
   functional_currency String            @db.Char(3)
   calendar_id         String            @db.Uuid
   is_primary          Boolean           @default(false)
@@ -928,8 +928,8 @@ model ledgers {
 
 model organizations {
   id             String           @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  code           String           @unique
-  name           String
+  code           String           @unique @db.VarChar(255)
+  name           String           @db.VarChar(255)
   is_active      Boolean          @default(true)
   created_at     DateTime         @default(now()) @db.Timestamptz(6)
   updated_at     DateTime         @default(now()) @db.Timestamptz(6)
@@ -941,8 +941,8 @@ model organizations {
 model payment_terms {
   id             String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id          String         @db.Uuid
-  code           String
-  name           String
+  code           String         @db.VarChar(255)
+  name           String         @db.VarChar(255)
   days           Int            @default(30)
   discount_days  Int?
   discount_rate  Decimal?       @db.Decimal(5, 2)
@@ -957,8 +957,8 @@ model payment_terms {
 model tax_codes {
   id               String             @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id            String             @db.Uuid
-  code             String
-  name             String
+  code             String             @db.VarChar
+  name             String             @db.VarChar
   scope            tax_scope          @default(BOTH)
   is_withholding   Boolean            @default(false)
   is_vat           Boolean            @default(true)
@@ -986,7 +986,7 @@ model tax_rates {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model tax_transactions {
   id             String    @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
-  source         String
+  source         String    @db.VarChar
   source_line_id String    @db.Uuid
   tax_code_id    String    @db.Uuid
   rate_percent   Decimal   @db.Decimal(9, 4)
@@ -1002,13 +1002,13 @@ model tax_transactions {
 model vendor_sites {
   id            String  @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   vendor_id     String  @db.Uuid
-  site_code     String
+  site_code     String  @db.VarChar(255)
   address_line1 String?
   address_line2 String?
-  city          String?
-  region        String?
-  postal_code   String?
-  country       String?
+  city          String? @db.VarChar(255)
+  region        String? @db.VarChar(255)
+  postal_code   String? @db.VarChar(255)
+  country       String? @db.VarChar(255)
   is_primary    Boolean @default(false)
   vendors       vendors @relation(fields: [vendor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -1019,12 +1019,12 @@ model vendor_sites {
 model vendors {
   id              String         @id @default(dbgenerated("finance.uuid_v4()")) @db.Uuid
   bu_id           String         @db.Uuid
-  vendor_no       String
-  name            String
-  tax_id          String?
+  vendor_no       String         @db.VarChar(255)
+  name            String         @db.VarChar(255)
+  tax_id          String?        @db.VarChar(255)
   currency_code   String         @db.Char(3)
   payment_term_id String?        @db.Uuid
-  status          String         @default("ACTIVE")
+  status          String         @default("ACTIVE") @db.VarChar(255)
   created_at      DateTime       @default(now()) @db.Timestamptz(6)
   ap_bills        ap_bills[]
   ap_payments     ap_payments[]
