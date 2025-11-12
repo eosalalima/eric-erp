@@ -1,0 +1,436 @@
+"use client";
+
+import {
+    AcademicCapIcon,
+    AdjustmentsHorizontalIcon,
+    ArrowPathRoundedSquareIcon,
+    BanknotesIcon,
+    BeakerIcon,
+    BellAlertIcon,
+    BookOpenIcon,
+    BugAntIcon,
+    BuildingOffice2Icon,
+    ChartBarIcon,
+    ChartBarSquareIcon,
+    ChartPieIcon,
+    ChevronRightIcon,
+    ChatBubbleLeftRightIcon,
+    ChatBubbleOvalLeftEllipsisIcon,
+    CheckCircleIcon,
+    ClipboardDocumentCheckIcon,
+    ClipboardDocumentListIcon,
+    CogIcon,
+    Cog6ToothIcon,
+    Cog8ToothIcon,
+    ComputerDesktopIcon,
+    CreditCardIcon,
+    CurrencyDollarIcon,
+    DocumentChartBarIcon,
+    DocumentCheckIcon,
+    EnvelopeIcon,
+    ExclamationTriangleIcon,
+    FolderIcon,
+    HandThumbUpIcon,
+    HeartIcon,
+    HomeIcon,
+    LightBulbIcon,
+    LockClosedIcon,
+    MagnifyingGlassIcon,
+    PresentationChartLineIcon,
+    PuzzlePieceIcon,
+    ReceiptPercentIcon,
+    ReceiptRefundIcon,
+    QuestionMarkCircleIcon,
+    ShieldCheckIcon,
+    ShoppingCartIcon,
+    StarIcon,
+    UserCircleIcon,
+    UserGroupIcon,
+    UserPlusIcon,
+    UsersIcon,
+    WalletIcon,
+    WrenchScrewdriverIcon,
+} from "@heroicons/react/24/outline";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, type FocusEvent } from "react";
+
+const iconMap = {
+    AcademicCapIcon,
+    AdjustmentsHorizontalIcon,
+    ArrowPathRoundedSquareIcon,
+    BanknotesIcon,
+    BeakerIcon,
+    BellAlertIcon,
+    BookOpenIcon,
+    BugAntIcon,
+    BuildingOffice2Icon,
+    ChartBarIcon,
+    ChartPieIcon,
+    ChartBarSquareIcon,
+    ChatBubbleLeftRightIcon,
+    ChatBubbleOvalLeftEllipsisIcon,
+    CheckCircleIcon,
+    ClipboardDocumentCheckIcon,
+    ClipboardDocumentListIcon,
+    CogIcon,
+    Cog6ToothIcon,
+    Cog8ToothIcon,
+    ComputerDesktopIcon,
+    CreditCardIcon,
+    CurrencyDollarIcon,
+    DocumentChartBarIcon,
+    DocumentCheckIcon,
+    EnvelopeIcon,
+    ExclamationTriangleIcon,
+    FolderIcon,
+    HandThumbUpIcon,
+    HeartIcon,
+    HomeIcon,
+    LightBulbIcon,
+    LockClosedIcon,
+    MagnifyingGlassIcon,
+    PresentationChartLineIcon,
+    PuzzlePieceIcon,
+    ReceiptPercentIcon,
+    ReceiptRefundIcon,
+    QuestionMarkCircleIcon,
+    ShieldCheckIcon,
+    ShoppingCartIcon,
+    StarIcon,
+    UserCircleIcon,
+    UserGroupIcon,
+    UserPlusIcon,
+    UsersIcon,
+    WalletIcon,
+    WrenchScrewdriverIcon,
+};
+
+const fallbackIconKey = "HomeIcon" satisfies keyof typeof iconMap;
+
+export interface SubNavigationItem {
+    name: string;
+    href: string;
+    icon?: keyof typeof iconMap;
+    current?: boolean;
+}
+
+export interface NavigationItem {
+    name: string;
+    href: string;
+    icon: keyof typeof iconMap;
+    current: boolean;
+    subnavigation?: SubNavigationItem[];
+}
+
+function classNames(...classes: (string | undefined | null | false)[]) {
+    return classes.filter(Boolean).join(" ");
+}
+
+interface SidebarProps {
+    navigation: NavigationItem[];
+}
+
+export default function Sidebar({ navigation }: SidebarProps) {
+    const pathname = usePathname();
+    const [openItems, setOpenItems] = useState<Set<string>>(() => {
+        const initial = new Set<string>();
+
+        navigation.forEach((item) => {
+            const hasChildren = (item.subnavigation?.length ?? 0) > 0;
+            if (!hasChildren) {
+                return;
+            }
+
+            const isActive =
+                item.current ||
+                pathname === item.href ||
+                (item.subnavigation ?? []).some(
+                    (child) => child.current || pathname === child.href
+                );
+
+            if (isActive) {
+                initial.add(item.href);
+            }
+        });
+
+        return initial;
+    });
+    const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+    useEffect(() => {
+        setOpenItems((previous) => {
+            const next = new Set(previous);
+
+            navigation.forEach((item) => {
+                const hasChildren = (item.subnavigation?.length ?? 0) > 0;
+                if (!hasChildren) {
+                    return;
+                }
+
+                const isActive =
+                    item.current ||
+                    pathname === item.href ||
+                    (item.subnavigation ?? []).some(
+                        (child) => child.current || pathname === child.href
+                    );
+
+                if (isActive) {
+                    next.add(item.href);
+                }
+            });
+
+            return next;
+        });
+    }, [navigation, pathname]);
+
+    const toggleItem = (href: string) => {
+        setOpenItems((previous) => {
+            const next = new Set(previous);
+
+            if (next.has(href)) {
+                next.delete(href);
+            } else {
+                next.add(href);
+            }
+
+            return next;
+        });
+    };
+
+    return (
+        <>
+            {/* Sidebar component, swap this element with another sidebar if you like */}
+            <div className="fixed flex flex-col h-full w-64 gap-y-5 overflow-y-auto overflow-x-visible bg-gray-900 px-6 pb-4 ring-1 ring-white/10">
+                <div className="flex h-16 shrink-0 items-center">
+                    <Image
+                        alt="ERIC ERP"
+                        src="/Logo.png"
+                        className="mt-4 mb-2 h-14 w-auto"
+                        width={150}
+                        height={96}
+                    />
+                    <div>
+                        <span className="text-xl font-semibold text-lime-500">
+                            ERIC ERP
+                        </span>
+                    </div>
+                </div>
+                <nav className="flex flex-1 flex-col">
+                    <ul role="list" className="flex flex-1 flex-col gap-y-7">
+                        <li>
+                            <ul role="list" className="-mx-2 space-y-1">
+                                {navigation.map((item) => {
+                                    const hasChildren =
+                                        (item.subnavigation?.length ?? 0) > 0;
+                                    const Icon =
+                                        iconMap[item.icon] ??
+                                        iconMap[fallbackIconKey];
+                                    const isActive =
+                                        item.current ||
+                                        pathname === item.href ||
+                                        (item.subnavigation ?? []).some(
+                                            (child) =>
+                                                child.current ||
+                                                pathname === child.href
+                                        );
+
+                                    const isMobileOpen =
+                                        hasChildren && openItems.has(item.href);
+                                    const isDesktopExpanded =
+                                        hasChildren &&
+                                        (hoveredItem === item.href || isActive);
+                                    const mobileListId = `${item.href}-mobile-list`;
+                                    const handleMouseEnter = () =>
+                                        setHoveredItem(item.href);
+                                    const handleMouseLeave = () => {
+                                        setHoveredItem((current) =>
+                                            current === item.href
+                                                ? null
+                                                : current
+                                        );
+                                    };
+                                    const handleBlur = (
+                                        event: FocusEvent<HTMLLIElement>
+                                    ) => {
+                                        const nextTarget = event.relatedTarget;
+                                        if (
+                                            nextTarget &&
+                                            nextTarget instanceof Node &&
+                                            event.currentTarget.contains(
+                                                nextTarget
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
+                                        setHoveredItem((current) =>
+                                            current === item.href
+                                                ? null
+                                                : current
+                                        );
+                                    };
+
+                                    return (
+                                        <li
+                                            key={item.href}
+                                            className={classNames(
+                                                "relative",
+                                                hasChildren
+                                                    ? "group"
+                                                    : undefined
+                                            )}
+                                            onMouseEnter={
+                                                hasChildren
+                                                    ? handleMouseEnter
+                                                    : undefined
+                                            }
+                                            onFocus={
+                                                hasChildren
+                                                    ? handleMouseEnter
+                                                    : undefined
+                                            }
+                                            onMouseLeave={
+                                                hasChildren
+                                                    ? handleMouseLeave
+                                                    : undefined
+                                            }
+                                            onBlur={
+                                                hasChildren
+                                                    ? handleBlur
+                                                    : undefined
+                                            }
+                                        >
+                                            <div className="relative">
+                                                <Link
+                                                    {...(pathname === "/"
+                                                        ? { target: "_blank" }
+                                                        : {})}
+                                                    rel="noopener noreferrer"
+                                                    href={item.href}
+                                                    className={classNames(
+                                                        isActive
+                                                            ? "bg-gray-800 text-white"
+                                                            : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                                        "flex items-center gap-x-3 rounded-md p-2 pr-9 text-sm/6 font-semibold transition md:pr-2"
+                                                    )}
+                                                >
+                                                    <Icon
+                                                        aria-hidden="true"
+                                                        className="size-6 shrink-0"
+                                                    />
+                                                    <span className="truncate">
+                                                        {item.name}
+                                                    </span>
+                                                    {hasChildren ? (
+                                                        <ChevronRightIcon
+                                                            aria-hidden="true"
+                                                            className={classNames(
+                                                                "ml-auto hidden size-4 shrink-0 text-gray-500 transition md:block md:group-hover:text-white",
+                                                                isDesktopExpanded
+                                                                    ? "md:rotate-90"
+                                                                    : undefined
+                                                            )}
+                                                        />
+                                                    ) : null}
+                                                </Link>
+                                                {hasChildren ? (
+                                                    <button
+                                                        type="button"
+                                                        aria-controls={
+                                                            mobileListId
+                                                        }
+                                                        aria-expanded={
+                                                            isMobileOpen
+                                                        }
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            toggleItem(
+                                                                item.href
+                                                            );
+                                                        }}
+                                                        className="absolute inset-y-0 right-2 flex items-center justify-center rounded-md p-1 text-gray-400 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white  md:hidden"
+                                                    >
+                                                        <ChevronRightIcon
+                                                            aria-hidden="true"
+                                                            className={classNames(
+                                                                "size-4 transition-transform",
+                                                                isMobileOpen
+                                                                    ? "rotate-90"
+                                                                    : "rotate-0"
+                                                            )}
+                                                        />
+                                                        <span className="sr-only">
+                                                            Toggle {item.name}{" "}
+                                                            navigation
+                                                        </span>
+                                                    </button>
+                                                ) : null}
+                                            </div>
+
+                                            {hasChildren ? (
+                                                <>
+                                                    <ul
+                                                        id={mobileListId}
+                                                        className={classNames(
+                                                            "space-y-1 pl-9 text-sm font-medium transition",
+                                                            isMobileOpen
+                                                                ? "mt-1"
+                                                                : "hidden",
+                                                            isDesktopExpanded
+                                                                ? "md:mt-2 md:space-y-1 md:pl-9 md:block"
+                                                                : "md:hidden"
+                                                        )}
+                                                    >
+                                                        {item.subnavigation?.map(
+                                                            (child) => {
+                                                                const childIsActive =
+                                                                    child.current ||
+                                                                    pathname ===
+                                                                        child.href;
+
+                                                                return (
+                                                                    <li
+                                                                        key={`${child.href}-mobile`}
+                                                                    >
+                                                                        <Link
+                                                                            href={
+                                                                                child.href
+                                                                            }
+                                                                            className={classNames(
+                                                                                childIsActive
+                                                                                    ? "bg-gray-800 text-white"
+                                                                                    : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                                                                                "flex items-center gap-x-2 rounded-md px-2 py-1 text-sm font-medium transition"
+                                                                            )}
+                                                                        >
+                                                                            {/* <ChildIcon
+                                                                                aria-hidden="true"
+                                                                                className="size-4 shrink-0"
+                                                                            /> */}
+                                                                            <span className="truncate">
+                                                                                {
+                                                                                    child.name
+                                                                                }
+                                                                            </span>
+                                                                        </Link>
+                                                                    </li>
+                                                                );
+                                                            }
+                                                        )}
+                                                    </ul>
+                                                </>
+                                            ) : null}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </>
+    );
+}

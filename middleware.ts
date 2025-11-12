@@ -4,12 +4,18 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/api/navigation",
 ]);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    if (req.method === "POST" && req.headers.has("Next-Action")) return;
-    auth().protect();
+    if (
+      req.method === "POST" &&
+      (req.headers.get("next-action") ?? req.headers.get("Next-Action"))
+    ) {
+      return;
+    }
+    await auth.protect();
   }
 });
 
